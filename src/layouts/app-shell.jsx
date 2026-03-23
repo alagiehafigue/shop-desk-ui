@@ -4,6 +4,7 @@ import {
   HiOutlineChartBar,
   HiOutlineCreditCard,
   HiOutlineLogout,
+  HiOutlinePresentationChartLine,
   HiOutlineShoppingCart,
   HiOutlineUserGroup,
 } from "react-icons/hi";
@@ -19,6 +20,7 @@ const navItems = [
   { label: "Products", to: "/app/products", icon: HiOutlineArchive },
   { label: "Inventory", to: "/app/inventory", icon: HiOutlineArrowPath },
   { label: "Customers", to: "/app/customers", icon: HiOutlineUserGroup },
+  { label: "Reports", to: "/app/reports", icon: HiOutlinePresentationChartLine },
   { label: "Payments", to: "/app/payments", icon: HiOutlineCreditCard },
 ];
 

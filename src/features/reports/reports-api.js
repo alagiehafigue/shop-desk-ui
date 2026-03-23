@@ -19,3 +19,8 @@ export async function fetchInventoryReport() {
   const { data } = await apiClient.get("/reports/inventory");
   return data;
 }
+
+export async function fetchCashierSalesReport() {
+  const { data } = await apiClient.get("/reports/cashier-sales");
+  return data;
+}

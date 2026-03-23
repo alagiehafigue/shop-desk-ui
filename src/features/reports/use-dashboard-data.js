@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 
 import {
+  fetchCashierSalesReport,
   fetchDailySalesReport,
   fetchInventoryReport,
   fetchProductPerformanceReport,
@@ -30,10 +31,21 @@ export function useDashboardData({ enabled }) {
         queryFn: fetchInventoryReport,
         enabled,
       },
+      {
+        queryKey: ["reports", "cashier-sales"],
+        queryFn: fetchCashierSalesReport,
+        enabled,
+      },
     ],
   });
 
-  const [dailySalesQuery, weeklySalesQuery, productPerformanceQuery, inventoryQuery] =
+  const [
+    dailySalesQuery,
+    weeklySalesQuery,
+    productPerformanceQuery,
+    inventoryQuery,
+    cashierSalesQuery,
+  ] =
     results;
 
   return {
@@ -41,6 +53,7 @@ export function useDashboardData({ enabled }) {
     weeklySalesQuery,
     productPerformanceQuery,
     inventoryQuery,
+    cashierSalesQuery,
     isLoading: results.some((query) => query.isLoading),
     isFetching: results.some((query) => query.isFetching),
     isError: results.some((query) => query.isError),

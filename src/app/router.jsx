@@ -8,6 +8,7 @@ import { SalesPage } from "../pages/sales-page";
 import { ProductsPage } from "../pages/products-page";
 import { CustomersPage } from "../pages/customers-page";
 import { InventoryPage } from "../pages/inventory-page";
+import { ReportsPage } from "../pages/reports-page";
 import { ProtectedRoute } from "../features/auth/protected-route";
 
 export const router = createBrowserRouter([
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
       {
         path: "inventory",
         element: <InventoryPage />,
+      },
+      {
+        path: "reports",
+        element: <ReportsPage />,
       },
       {
         path: "payments",
