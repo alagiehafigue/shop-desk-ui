@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   HiOutlineArchive,
   HiOutlineChartBar,
@@ -27,7 +28,33 @@ const navItems = [
 
 export function AppShell() {
   const { user, signOut } = useAuth();
+  const location = useLocation();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const visibleNavItems = navItems.filter((item) => canAccess(user, item.feature));
+
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
+
+  const renderNavItems = (tone = "desktop") =>
+    visibleNavItems.map(({ icon: Icon, label, to }) => (
+      <NavLink
+        key={to}
+        className={({ isActive }) =>
+          `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+            isActive
+              ? "bg-white text-brand-700"
+              : tone === "mobile"
+                ? "text-slate-700 hover:bg-slate-100 hover:text-brand-700"
+                : "text-blue-100 hover:bg-white/10 hover:text-white"
+          }`
+        }
+        to={to}
+      >
+        <Icon className="text-lg" />
+        {label}
+      </NavLink>
+    ));
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -43,22 +70,7 @@ export function AppShell() {
             </div>
           </div>
 
-          <nav className="mt-10 space-y-2">
-            {visibleNavItems.map(({ icon: Icon, label, to }) => (
-              <NavLink
-                key={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    isActive ? "bg-white text-brand-700" : "text-blue-100 hover:bg-white/10 hover:text-white"
-                  }`
-                }
-                to={to}
-              >
-                <Icon className="text-lg" />
-                {label}
-              </NavLink>
-            ))}
-          </nav>
+          <nav className="mt-10 space-y-2">{renderNavItems()}</nav>
 
           <button
             className="mt-auto flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-blue-100 transition hover:bg-white/10 hover:text-white"
@@ -71,27 +83,31 @@ export function AppShell() {
         </aside>
 
         <main className="flex-1">
-          <header className="border-b border-slate-200 bg-white/90 px-6 py-5 backdrop-blur">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 lg:hidden">
+          <header className="border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                <button
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 lg:hidden"
+                  type="button"
+                  onClick={() => setIsMobileNavOpen(true)}
+                >
                   <HiBars3 className="text-xl" />
-                </div>
-                <div>
+                </button>
+                <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">
                     Back Office
                   </p>
-                  <h2 className="mt-1 text-2xl font-extrabold text-ink">
+                  <h2 className="mt-1 text-xl font-extrabold text-ink sm:text-2xl">
                     Welcome back, {user?.name ?? "Operator"}
                   </h2>
                 </div>
               </div>
 
-              <div className="text-right">
+              <div className="w-full text-left sm:w-auto sm:text-right">
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">
                   Account
                 </p>
-                <p className="text-sm font-semibold text-slate-700">{user?.email}</p>
+                <p className="truncate text-sm font-semibold text-slate-700">{user?.email}</p>
                 <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
                   {user?.role}
                 </p>
@@ -102,6 +118,39 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      {isMobileNavOpen ? (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <button
+            aria-label="Close navigation"
+            className="flex-1 bg-slate-950/40"
+            type="button"
+            onClick={() => setIsMobileNavOpen(false)}
+          />
+          <div className="flex w-full max-w-xs flex-col bg-white px-5 py-6 shadow-2xl">
+            <div className="flex items-center gap-3 rounded-2xl bg-brand-900 px-4 py-4 text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand-700">
+                <PiStorefrontBold className="text-2xl" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-[0.3em] text-blue-100">ShopDesk</p>
+                <p className="truncate text-lg font-bold">POS Control</p>
+              </div>
+            </div>
+
+            <nav className="mt-6 space-y-2">{renderNavItems("mobile")}</nav>
+
+            <button
+              className="mt-auto flex items-center justify-center gap-3 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+              type="button"
+              onClick={signOut}
+            >
+              <HiOutlineLogout className="text-lg" />
+              Sign out
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

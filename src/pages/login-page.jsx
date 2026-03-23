@@ -23,24 +23,24 @@ const highlights = [
 export function LoginPage() {
   return (
     <div className="min-h-screen overflow-hidden bg-login-glow">
-      <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-10">
+      <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 lg:px-10">
         <section className="order-2 lg:order-1">
           <p className="text-sm font-bold uppercase tracking-[0.35em] text-brand-600">
             Retail Operations
           </p>
-          <h1 className="mt-4 max-w-xl text-5xl font-extrabold leading-tight text-ink">
+          <h1 className="mt-4 max-w-xl text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
             The control room for your modern store.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
             ShopDesk gives your team a calmer way to manage checkout, stock,
             customers, and reporting from one connected workspace.
           </p>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-3 lg:mt-10">
             {highlights.map(({ title, description, icon: Icon }) => (
               <div
                 key={title}
-                className="rounded-[24px] border border-white/60 bg-white/70 p-5 shadow-lg shadow-slate-200/60 backdrop-blur"
+                className="rounded-[24px] border border-white/60 bg-white/70 p-5 shadow-lg shadow-slate-200/60 backdrop-blur sm:p-6"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
                   <Icon className="text-2xl" />
@@ -52,7 +52,7 @@ export function LoginPage() {
           </div>
         </section>
 
-        <section className="order-1 lg:order-2 lg:justify-self-end">
+        <section className="order-1 w-full lg:order-2 lg:justify-self-end">
           <LoginForm />
         </section>
       </div>

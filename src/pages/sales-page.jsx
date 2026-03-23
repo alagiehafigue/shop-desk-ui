@@ -251,20 +251,20 @@ function ReceiptModal({ receipt, paymentResult, onClose }) {
   const paymentDetails = getPaymentDetails(paymentResult);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8">
-      <div className="max-h-full w-full max-w-2xl overflow-auto rounded-[28px] bg-white p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 sm:py-8">
+      <div className="max-h-full w-full max-w-2xl overflow-auto rounded-[28px] bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
               Payment Successful
             </p>
-            <h2 className="mt-2 text-3xl font-extrabold text-ink">{receipt.store}</h2>
+            <h2 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">{receipt.store}</h2>
             <p className="mt-2 text-sm text-slate-500">
               Transaction ID: {receipt.transaction_id}
             </p>
             <p className="mt-1 text-sm text-slate-500">{formatDateTime(receipt.date)}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               className="rounded-2xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
               type="button"
@@ -318,7 +318,7 @@ function ReceiptModal({ receipt, paymentResult, onClose }) {
               {paymentDetails.map((detail) => (
                 <div
                   key={detail.label}
-                  className="flex items-center justify-between gap-4 text-sm"
+                  className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                 >
                   <span className="text-slate-500">{detail.label}</span>
                   <span className="font-semibold text-ink">{detail.value}</span>
@@ -336,7 +336,7 @@ function ReceiptModal({ receipt, paymentResult, onClose }) {
             {receipt.items.map((item, index) => (
               <div
                 key={`${item.name}-${index}`}
-                className="flex items-center justify-between px-5 py-4"
+                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-semibold text-ink">{item.name}</p>
@@ -550,21 +550,21 @@ export function SalesPage() {
 
   return (
     <>
-      <section className="p-6 lg:p-8">
+      <section className="p-4 sm:p-6 lg:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
                     POS Sales
                   </p>
-                  <h1 className="mt-2 text-3xl font-extrabold text-ink">
+                  <h1 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">
                     Create a live sale and process payment
                   </h1>
                 </div>
 
-                <label className="flex w-full max-w-md items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 focus-within:border-brand-500 focus-within:bg-white lg:w-[360px]">
+                <label className="flex w-full items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 focus-within:border-brand-500 focus-within:bg-white lg:max-w-md lg:w-[360px]">
                   <HiMagnifyingGlass className="mr-3 text-xl text-slate-400" />
                   <input
                     className="h-12 w-full border-none bg-transparent outline-none"
@@ -681,9 +681,9 @@ export function SalesPage() {
                         </button>
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between gap-4">
+                      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <input
-                          className="h-11 w-24 rounded-2xl border border-slate-200 bg-white px-4 outline-none focus:border-brand-500"
+                          className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 outline-none focus:border-brand-500 sm:w-24"
                           min="1"
                           type="number"
                           value={item.quantity}
@@ -708,12 +708,12 @@ export function SalesPage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div>
                 <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
                   Checkout
                 </p>
-                <h2 className="mt-2 text-2xl font-extrabold text-ink">
+                <h2 className="mt-2 text-xl font-extrabold text-ink sm:text-2xl">
                   Finalize transaction
                 </h2>
               </div>

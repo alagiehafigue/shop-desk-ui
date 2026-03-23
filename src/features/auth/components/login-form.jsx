@@ -51,7 +51,7 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-[28px] border border-white/70 bg-white/95 p-8 shadow-panel backdrop-blur">
+    <div className="w-full max-w-md rounded-[28px] border border-white/70 bg-white/95 p-6 shadow-panel backdrop-blur sm:p-8">
       <div className="mb-8 flex flex-col items-center text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 shadow-sm">
           <PiShoppingCartSimpleFill className="text-3xl" />
@@ -59,7 +59,7 @@ export function LoginForm() {
         <p className="text-sm font-semibold uppercase tracking-[0.35em] text-brand-600">
           ShopDesk
         </p>
-        <h1 className="mt-3 text-3xl font-extrabold text-ink">POS System Login</h1>
+        <h1 className="mt-3 text-2xl font-extrabold text-ink sm:text-3xl">POS System Login</h1>
         <p className="mt-2 text-sm leading-6 text-slate-500">
           Sign in to manage sales, inventory, customers, and daily operations.
         </p>
@@ -111,7 +111,7 @@ export function LoginForm() {
           </div>
         </label>
 
-        <div className="flex items-center justify-between gap-4 text-sm">
+        <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <label className="flex items-center gap-2 text-slate-500">
             <input
               checked={rememberMe}
@@ -122,7 +122,7 @@ export function LoginForm() {
             Remember me
           </label>
 
-          <Link className="font-semibold text-brand-600 hover:text-brand-700" to="/login">
+          <Link className="font-semibold text-brand-600 hover:text-brand-700 sm:text-right" to="/login">
             Forgot Password?
           </Link>
         </div>

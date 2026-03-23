@@ -78,14 +78,14 @@ function PaymentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8">
-      <div className="w-full max-w-2xl rounded-[28px] bg-white p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 sm:py-8">
+      <div className="max-h-full w-full max-w-2xl overflow-auto rounded-[28px] bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
               Complete Payment
             </p>
-            <h2 className="mt-2 text-3xl font-extrabold text-ink">
+            <h2 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">
               Sale {pendingSale.id}
             </h2>
             <p className="mt-2 text-sm text-slate-500">
@@ -209,7 +209,7 @@ function PaymentModal({
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               className="rounded-2xl bg-slate-100 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-200"
               type="button"
@@ -322,13 +322,13 @@ export function PaymentsPage() {
 
   return (
     <>
-      <section className="p-6 lg:p-8">
+      <section className="p-4 sm:p-6 lg:p-8">
         <div className="space-y-6">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
               Payments Center
             </p>
-            <h1 className="mt-2 text-3xl font-extrabold text-ink">
+            <h1 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">
               Keep store payments organized across cash, mobile money, and card
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-500">
@@ -365,8 +365,8 @@ export function PaymentsPage() {
 
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
             <div className="space-y-6">
-              <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center gap-3">
+              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex items-start gap-3 sm:items-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
                     <HiOutlineReceiptPercent className="text-2xl" />
                   </div>
@@ -395,7 +395,7 @@ export function PaymentsPage() {
                     {summary.map((item) => (
                       <div
                         key={item.method}
-                        className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-4"
+                        className="flex flex-col gap-3 rounded-2xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
                           <p className="font-bold text-ink">{getMethodLabel(item.method)}</p>
@@ -419,7 +419,7 @@ export function PaymentsPage() {
                 )}
               </div>
 
-              <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <p className="text-sm font-bold uppercase tracking-[0.24em] text-brand-600">
                   Ghana Payment Focus
                 </p>
@@ -478,12 +478,12 @@ export function PaymentsPage() {
                             {formatDate(sale.created_at)}
                           </p>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
                           <p className="text-lg font-extrabold text-ink">
                             {formatCurrency(sale.total_amount)}
                           </p>
                           <button
-                            className="rounded-2xl bg-brand-600 px-4 py-3 font-semibold text-white transition hover:bg-brand-700"
+                            className="rounded-2xl bg-brand-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-brand-700"
                             type="button"
                             onClick={() => openPaymentModal(sale)}
                           >
