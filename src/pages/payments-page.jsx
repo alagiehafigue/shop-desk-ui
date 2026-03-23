@@ -308,6 +308,12 @@ export function PaymentsPage() {
       sale_id: selectedSale.id,
       method: paymentMethod,
       amount_paid: Number(formValues.amount_paid),
+      card_auth_code:
+        paymentMethod === "card" ? formValues.card_auth_code.trim() : undefined,
+      card_holder_name:
+        paymentMethod === "card" ? formValues.card_holder_name.trim() : undefined,
+      card_last4:
+        paymentMethod === "card" ? formValues.card_last4.replace(/\D/g, "") : undefined,
       payer_phone: paymentMethod === "momo" ? formValues.payer_phone.trim() : undefined,
     });
 

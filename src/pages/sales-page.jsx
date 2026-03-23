@@ -292,6 +292,10 @@ export function SalesPage() {
       sale_id: sale.id,
       method: paymentMethod,
       amount_paid: Number(amountPaid),
+      card_auth_code: paymentMethod === "card" ? cardAuthCode.trim() : undefined,
+      card_holder_name: paymentMethod === "card" ? cardHolderName.trim() : undefined,
+      card_last4:
+        paymentMethod === "card" ? cardLast4.replace(/\D/g, "") : undefined,
       payer_phone: paymentMethod === "momo" ? payerPhone.trim() : undefined,
     });
 
