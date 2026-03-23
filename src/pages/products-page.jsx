@@ -34,6 +34,12 @@ function formatCurrency(value) {
   }).format(Number(value ?? 0));
 }
 
+function generateInternalBarcode() {
+  const timestamp = Date.now().toString().slice(-8);
+  const randomSuffix = Math.floor(Math.random() * 9000 + 1000).toString();
+  return `SD-${timestamp}${randomSuffix}`;
+}
+
 function ProductFormModal({
   mode,
   values,
@@ -95,12 +101,32 @@ function ProductFormModal({
               <span className="mb-2 block text-sm font-semibold text-slate-600">
                 Barcode
               </span>
-              <input
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                name="barcode"
-                value={values.barcode}
-                onChange={onChange}
-              />
+              <div className="space-y-3">
+                <input
+                  className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 uppercase outline-none focus:border-brand-500 focus:bg-white"
+                  name="barcode"
+                  placeholder="Scan or type barcode, e.g. 123456789012"
+                  value={values.barcode}
+                  onChange={onChange}
+                />
+                <div className="flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                  <p>Use the manufacturer barcode or generate an internal ShopDesk code.</p>
+                  <button
+                    className="rounded-2xl bg-slate-100 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-200"
+                    type="button"
+                    onClick={() =>
+                      onChange({
+                        target: {
+                          name: "barcode",
+                          value: generateInternalBarcode(),
+                        },
+                      })
+                    }
+                  >
+                    Generate barcode
+                  </button>
+                </div>
+              </div>
             </label>
 
             <label className="block">
