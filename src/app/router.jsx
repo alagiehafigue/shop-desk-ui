@@ -5,6 +5,7 @@ import { LoginPage } from "../pages/login-page";
 import { DashboardPage } from "../pages/dashboard-page";
 import { FeaturePlaceholderPage } from "../pages/feature-placeholder-page";
 import { SalesPage } from "../pages/sales-page";
+import { ProductsPage } from "../pages/products-page";
 import { ProtectedRoute } from "../features/auth/protected-route";
 
 export const router = createBrowserRouter([
@@ -38,12 +39,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "products",
-        element: (
-          <FeaturePlaceholderPage
-            title="Products page is not built yet"
-            description="We have the backend module ready, and we can implement the real product management screen as the next commit-sized feature."
-          />
-        ),
+        element: <ProductsPage />,
       },
       {
         path: "customers",
