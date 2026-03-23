@@ -7,6 +7,7 @@ import {
   HiOutlineShoppingCart,
   HiOutlineUserGroup,
 } from "react-icons/hi";
+import { HiBars3 } from "react-icons/hi2";
 import { PiStorefrontBold } from "react-icons/pi";
 
 import { useAuth } from "../features/auth/auth-context";
@@ -66,16 +67,24 @@ export function AppShell() {
         <main className="flex-1">
           <header className="border-b border-slate-200 bg-white/90 px-6 py-5 backdrop-blur">
             <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">
-                  Back Office
-                </p>
-                <h2 className="mt-1 text-2xl font-extrabold text-ink">
-                  Welcome back, {user?.name ?? "Operator"}
-                </h2>
+              <div className="flex items-center gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 lg:hidden">
+                  <HiBars3 className="text-xl" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">
+                    Back Office
+                  </p>
+                  <h2 className="mt-1 text-2xl font-extrabold text-ink">
+                    Welcome back, {user?.name ?? "Operator"}
+                  </h2>
+                </div>
               </div>
 
               <div className="text-right">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">
+                  Account
+                </p>
                 <p className="text-sm font-semibold text-slate-700">{user?.email}</p>
                 <p className="text-xs uppercase tracking-[0.24em] text-slate-400">
                   {user?.role}
