@@ -51,7 +51,7 @@ export function AppShell() {
         }
         to={to}
       >
-        <Icon className="text-lg" />
+        <Icon className="shrink-0 text-lg" />
         {label}
       </NavLink>
     ));
@@ -77,7 +77,7 @@ export function AppShell() {
             type="button"
             onClick={signOut}
           >
-            <HiOutlineLogout className="text-lg" />
+            <HiOutlineLogout className="shrink-0 text-lg" />
             Sign out
           </button>
         </aside>
@@ -91,7 +91,7 @@ export function AppShell() {
                   type="button"
                   onClick={() => setIsMobileNavOpen(true)}
                 >
-                  <HiBars3 className="text-xl" />
+                  <HiBars3 className="shrink-0 text-xl" />
                 </button>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">
@@ -145,7 +145,7 @@ export function AppShell() {
               type="button"
               onClick={signOut}
             >
-              <HiOutlineLogout className="text-lg" />
+              <HiOutlineLogout className="shrink-0 text-lg" />
               Sign out
             </button>
           </div>

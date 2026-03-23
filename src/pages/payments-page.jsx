@@ -118,7 +118,7 @@ function PaymentModal({
                   type="button"
                   onClick={() => onMethodChange(value)}
                 >
-                  <Icon className="text-xl" />
+                  <Icon className="shrink-0 text-xl" />
                   <p className="mt-3 font-bold">{label}</p>
                   <p className="mt-1 text-xs text-slate-500">{description}</p>
                 </button>

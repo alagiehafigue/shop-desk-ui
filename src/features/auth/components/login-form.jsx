@@ -71,11 +71,11 @@ export function LoginForm() {
             Email
           </span>
           <div className="flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-brand-500 focus-within:bg-white">
-            <HiOutlineMail className="mr-3 text-lg text-slate-400" />
+            <HiOutlineMail className="mr-3 shrink-0 text-lg text-slate-400" />
             <input
               required
               autoComplete="email"
-              className="h-14 w-full border-none bg-transparent outline-none"
+              className="h-14 w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base"
               name="email"
               placeholder="name@shopdesk.com"
               type="email"
@@ -90,11 +90,11 @@ export function LoginForm() {
             Password
           </span>
           <div className="flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-brand-500 focus-within:bg-white">
-            <HiOutlineLockClosed className="mr-3 text-lg text-slate-400" />
+            <HiOutlineLockClosed className="mr-3 shrink-0 text-lg text-slate-400" />
             <input
               required
               autoComplete="current-password"
-              className="h-14 w-full border-none bg-transparent outline-none"
+              className="h-14 w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base"
               name="password"
               placeholder="Enter your password"
               type={showPassword ? "text" : "password"}
@@ -102,7 +102,7 @@ export function LoginForm() {
               onChange={handleChange}
             />
             <button
-              className="text-slate-400 transition hover:text-slate-600"
+              className="shrink-0 text-slate-400 transition hover:text-slate-600"
               type="button"
               onClick={() => setShowPassword((current) => !current)}
             >

@@ -39,14 +39,14 @@ function InventoryActionModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8">
-      <div className="w-full max-w-2xl rounded-[28px] bg-white p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 sm:py-8">
+      <div className="max-h-full w-full max-w-2xl overflow-auto rounded-[28px] bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
               Inventory Action
             </p>
-            <h2 className="mt-2 text-3xl font-extrabold text-ink">
+            <h2 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">
               {mode === "restock" ? "Restock product" : "Adjust stock"}
             </h2>
             <p className="mt-2 text-sm text-slate-500">{product.name}</p>
@@ -97,7 +97,7 @@ function InventoryActionModal({
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               className="rounded-2xl bg-slate-100 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-200"
               type="button"
@@ -134,14 +134,14 @@ function InventoryLogsModal({ product, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8">
-      <div className="w-full max-w-3xl rounded-[28px] bg-white p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 sm:py-8">
+      <div className="max-h-full w-full max-w-3xl overflow-auto rounded-[28px] bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
               Inventory Logs
             </p>
-            <h2 className="mt-2 text-3xl font-extrabold text-ink">{product.name}</h2>
+            <h2 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">{product.name}</h2>
           </div>
           <button
             className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
@@ -170,7 +170,7 @@ function InventoryLogsModal({ product, onClose }) {
           ) : logs.length ? (
             <div className="divide-y divide-slate-100">
               {logs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                <div key={log.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-semibold capitalize text-ink">{log.change_type}</p>
                     <p className="mt-1 text-sm text-slate-500">{formatDate(log.created_at)}</p>
@@ -302,24 +302,24 @@ export function InventoryPage() {
 
   return (
     <>
-      <section className="p-6 lg:p-8">
+      <section className="p-4 sm:p-6 lg:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.45fr_0.85fr]">
           <div className="space-y-6">
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
                     Inventory Management
                   </p>
-                  <h1 className="mt-2 text-3xl font-extrabold text-ink">
+                  <h1 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">
                     Monitor stock and record inventory changes
                   </h1>
                 </div>
 
                 <label className="flex w-full items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 focus-within:border-brand-500 focus-within:bg-white sm:w-[320px]">
-                  <HiMagnifyingGlass className="mr-3 text-xl text-slate-400" />
+                  <HiMagnifyingGlass className="mr-3 shrink-0 text-xl text-slate-400" />
                   <input
-                    className="h-12 w-full border-none bg-transparent outline-none"
+                    className="h-12 w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base"
                     placeholder="Search inventory"
                     type="text"
                     value={searchTerm}

@@ -45,10 +45,10 @@ export function UsersPage() {
   const users = usersQuery.data ?? [];
 
   return (
-    <section className="p-6 lg:p-8">
+    <section className="p-4 sm:p-6 lg:p-8">
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-3">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex items-start gap-3 sm:items-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
               <HiOutlineUserPlus className="text-2xl" />
             </div>
@@ -56,7 +56,7 @@ export function UsersPage() {
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
                 Admin Only
               </p>
-              <h1 className="text-2xl font-extrabold text-ink">Register new staff user</h1>
+              <h1 className="text-2xl font-extrabold leading-tight text-ink">Register new staff user</h1>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export function UsersPage() {
         </div>
 
         <div className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-5">
+          <div className="flex items-start gap-3 border-b border-slate-200 px-6 py-5 sm:items-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
               <HiOutlineShieldCheck className="text-2xl" />
             </div>

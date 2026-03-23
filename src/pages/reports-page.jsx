@@ -37,12 +37,12 @@ function formatDate(value) {
 
 function ReportsLockedPage({ user }) {
   return (
-    <section className="p-6 lg:p-8">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
+    <section className="p-4 sm:p-6 lg:p-8">
+      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
           Reports Access
         </p>
-        <h1 className="mt-3 text-3xl font-extrabold text-ink">
+        <h1 className="mt-3 text-2xl font-extrabold text-ink sm:text-3xl">
           Reporting is limited to admin and manager roles.
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
@@ -57,7 +57,7 @@ function ReportsLockedPage({ user }) {
 
 function ReportsSkeleton() {
   return (
-    <section className="p-6 lg:p-8">
+    <section className="p-4 sm:p-6 lg:p-8">
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-5">
           {Array.from({ length: 5 }).map((_, index) => (
@@ -72,8 +72,8 @@ function ReportsSkeleton() {
 
 function ReportsError({ message }) {
   return (
-    <section className="p-6 lg:p-8">
-      <div className="rounded-[28px] border border-red-100 bg-red-50 p-8 text-red-700">
+    <section className="p-4 sm:p-6 lg:p-8">
+      <div className="rounded-[28px] border border-red-100 bg-red-50 p-6 text-red-700 sm:p-8">
         <p className="text-sm font-bold uppercase tracking-[0.3em]">Reports Error</p>
         <p className="mt-3 text-base">{message}</p>
       </div>
@@ -375,20 +375,20 @@ function ReportsContent({
   })();
 
   return (
-    <section className="p-6 lg:p-8">
+    <section className="p-4 sm:p-6 lg:p-8">
       <div className="space-y-6">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
             Reports Center
           </p>
-          <h1 className="mt-2 text-3xl font-extrabold text-ink">
+          <h1 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl">
             Explore operational performance across the store
           </h1>
           <div className="mt-6 flex flex-wrap gap-3">
             {tabs.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                className={`inline-flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                   activeTab === id
                     ? "bg-brand-600 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -396,7 +396,7 @@ function ReportsContent({
                 type="button"
                 onClick={() => onTabChange(id)}
               >
-                <Icon className="text-lg" />
+                <Icon className="shrink-0 text-lg" />
                 {label}
               </button>
             ))}

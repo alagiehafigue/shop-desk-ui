@@ -565,9 +565,9 @@ export function SalesPage() {
                 </div>
 
                 <label className="flex w-full items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 focus-within:border-brand-500 focus-within:bg-white lg:max-w-md lg:w-[360px]">
-                  <HiMagnifyingGlass className="mr-3 text-xl text-slate-400" />
+                  <HiMagnifyingGlass className="mr-3 shrink-0 text-xl text-slate-400" />
                   <input
-                    className="h-12 w-full border-none bg-transparent outline-none"
+                    className="h-12 w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base"
                     placeholder="Search products by name, category, or barcode"
                     type="text"
                     value={searchTerm}
@@ -673,7 +673,7 @@ export function SalesPage() {
                           </p>
                         </div>
                         <button
-                          className="rounded-xl bg-white p-2 text-slate-400 transition hover:text-red-500"
+                          className="shrink-0 rounded-xl bg-white p-2 text-slate-400 transition hover:text-red-500"
                           type="button"
                           onClick={() => removeFromCart(item.productId)}
                         >
@@ -790,7 +790,7 @@ export function SalesPage() {
                         type="button"
                         onClick={() => setPaymentMethod(value)}
                       >
-                        <Icon className="text-xl" />
+                        <Icon className="shrink-0 text-xl" />
                         <p className="mt-3 font-bold">{label}</p>
                       </button>
                     ))}
