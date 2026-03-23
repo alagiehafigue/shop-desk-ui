@@ -6,6 +6,7 @@ import { DashboardPage } from "../pages/dashboard-page";
 import { FeaturePlaceholderPage } from "../pages/feature-placeholder-page";
 import { SalesPage } from "../pages/sales-page";
 import { ProductsPage } from "../pages/products-page";
+import { CustomersPage } from "../pages/customers-page";
 import { ProtectedRoute } from "../features/auth/protected-route";
 
 export const router = createBrowserRouter([
@@ -43,12 +44,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "customers",
-        element: (
-          <FeaturePlaceholderPage
-            title="Customers page is not built yet"
-            description="The customer routes already exist in your backend, so we can build this management page next without changing the project direction."
-          />
-        ),
+        element: <CustomersPage />,
       },
       {
         path: "payments",
