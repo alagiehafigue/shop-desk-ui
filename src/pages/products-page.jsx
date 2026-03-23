@@ -15,6 +15,7 @@ import {
   deleteProduct,
   updateProduct,
 } from "../features/products/products-api";
+import { ConfirmDialog } from "../components/confirm-dialog";
 import { getApiErrorMessage } from "../lib/error-utils";
 
 const initialFormValues = {
@@ -191,6 +192,7 @@ export function ProductsPage() {
   const [modalMode, setModalMode] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [formValues, setFormValues] = useState(initialFormValues);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const canManageProducts = ["admin", "manager"].includes(user?.role);
   const products = productsQuery.data ?? [];
@@ -323,14 +325,13 @@ export function ProductsPage() {
     closeModal();
   };
 
-  const handleDelete = async (product) => {
-    const confirmed = window.confirm(`Delete "${product.name}" from products?`);
-
-    if (!confirmed) {
+  const handleDelete = async () => {
+    if (!productToDelete) {
       return;
     }
 
-    await deleteMutation.mutateAsync(product.id);
+    await deleteMutation.mutateAsync(productToDelete.id);
+    setProductToDelete(null);
   };
 
   return (
@@ -462,7 +463,7 @@ export function ProductsPage() {
                                   <button
                                     className="rounded-2xl bg-red-50 p-3 text-red-600 transition hover:bg-red-100"
                                     type="button"
-                                    onClick={() => handleDelete(product)}
+                                    onClick={() => setProductToDelete(product)}
                                   >
                                     <HiOutlineTrash className="text-lg" />
                                   </button>
@@ -599,6 +600,18 @@ export function ProductsPage() {
           onChange={handleChange}
           onClose={closeModal}
           onSubmit={handleSubmit}
+        />
+      ) : null}
+
+      {productToDelete ? (
+        <ConfirmDialog
+          cancelLabel="Keep product"
+          confirmLabel="Delete product"
+          description={`This will remove "${productToDelete.name}" from the product catalog.`}
+          isPending={deleteMutation.isPending}
+          title="Delete this product?"
+          onCancel={() => setProductToDelete(null)}
+          onConfirm={handleDelete}
         />
       ) : null}
     </>

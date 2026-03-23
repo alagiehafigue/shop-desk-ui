@@ -12,6 +12,7 @@ import {
 import { HiOutlineArrowPath, HiBars3, HiOutlineUserPlus } from "react-icons/hi2";
 import { PiStorefrontBold } from "react-icons/pi";
 
+import { ConfirmDialog } from "../components/confirm-dialog";
 import { useAuth } from "../features/auth/auth-context";
 import { canAccess } from "../features/auth/permissions";
 
@@ -30,6 +31,7 @@ export function AppShell() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isSignOutDialogOpen, setIsSignOutDialogOpen] = useState(false);
   const visibleNavItems = navItems.filter((item) => canAccess(user, item.feature));
 
   useEffect(() => {
@@ -56,6 +58,11 @@ export function AppShell() {
       </NavLink>
     ));
 
+  const handleSignOut = async () => {
+    await signOut();
+    setIsSignOutDialogOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="mx-auto flex min-h-screen max-w-[1440px]">
@@ -75,7 +82,7 @@ export function AppShell() {
           <button
             className="mt-auto flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-blue-100 transition hover:bg-white/10 hover:text-white"
             type="button"
-            onClick={signOut}
+            onClick={() => setIsSignOutDialogOpen(true)}
           >
             <HiOutlineLogout className="shrink-0 text-lg" />
             Sign out
@@ -143,13 +150,25 @@ export function AppShell() {
             <button
               className="mt-auto flex items-center justify-center gap-3 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
               type="button"
-              onClick={signOut}
+              onClick={() => setIsSignOutDialogOpen(true)}
             >
               <HiOutlineLogout className="shrink-0 text-lg" />
               Sign out
             </button>
           </div>
         </div>
+      ) : null}
+
+      {isSignOutDialogOpen ? (
+        <ConfirmDialog
+          cancelLabel="Stay signed in"
+          confirmLabel="Yes, sign out"
+          confirmTone="primary"
+          description="You will be returned to the login screen and will need to sign in again to continue working."
+          title="Sign out of ShopDesk?"
+          onCancel={() => setIsSignOutDialogOpen(false)}
+          onConfirm={handleSignOut}
+        />
       ) : null}
     </div>
   );

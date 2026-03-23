@@ -9,6 +9,7 @@ import {
   HiOutlineUserGroup,
 } from "react-icons/hi2";
 
+import { ConfirmDialog } from "../components/confirm-dialog";
 import { getApiErrorMessage } from "../lib/error-utils";
 import {
   createCustomer,
@@ -199,7 +200,7 @@ function CustomerSalesModal({ customer, onClose }) {
               {sales.map((sale) => (
                 <div
                   key={sale.id}
-                className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="font-semibold text-ink">{sale.id}</p>
@@ -235,6 +236,7 @@ export function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [historyCustomer, setHistoryCustomer] = useState(null);
   const [formValues, setFormValues] = useState(initialFormValues);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
 
   const customers = customersQuery.data ?? [];
 
@@ -343,14 +345,13 @@ export function CustomersPage() {
     closeModal();
   };
 
-  const handleDelete = async (customer) => {
-    const confirmed = window.confirm(`Delete "${customer.name}" from customers?`);
-
-    if (!confirmed) {
+  const handleDelete = async () => {
+    if (!customerToDelete) {
       return;
     }
 
-    await deleteMutation.mutateAsync(customer.id);
+    await deleteMutation.mutateAsync(customerToDelete.id);
+    setCustomerToDelete(null);
   };
 
   return (
@@ -460,7 +461,7 @@ export function CustomersPage() {
                               <button
                                 className="rounded-2xl bg-red-50 p-3 text-red-600 transition hover:bg-red-100"
                                 type="button"
-                                onClick={() => handleDelete(customer)}
+                                onClick={() => setCustomerToDelete(customer)}
                               >
                                 <HiOutlineTrash className="text-lg" />
                               </button>
@@ -541,20 +542,25 @@ export function CustomersPage() {
                         key={customer.id}
                         className="flex flex-col gap-3 rounded-2xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
+                        <div className="flex min-w-0 items-center gap-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
                             {index + 1}
                           </div>
-                          <div>
-                            <p className="font-bold text-ink">{customer.name}</p>
-                            <p className="mt-1 text-sm text-slate-500">
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-ink">{customer.name}</p>
+                            <p className="mt-1 truncate text-sm text-slate-500">
                               {customer.email || customer.phone || "No contact details"}
                             </p>
                           </div>
                         </div>
-                        <p className="text-right text-sm font-bold text-brand-600">
-                          {customer.loyalty_points ?? 0} pts
-                        </p>
+                        <div className="min-w-[76px] shrink-0 text-right text-brand-600">
+                          <p className="text-2xl font-extrabold leading-none">
+                            {customer.loyalty_points ?? 0}
+                          </p>
+                          <p className="mt-1 text-xs font-bold uppercase tracking-[0.24em]">
+                            pts
+                          </p>
+                        </div>
                       </div>
                     ))}
                 </div>
@@ -597,6 +603,18 @@ export function CustomersPage() {
         <CustomerSalesModal
           customer={historyCustomer}
           onClose={() => setHistoryCustomer(null)}
+        />
+      ) : null}
+
+      {customerToDelete ? (
+        <ConfirmDialog
+          cancelLabel="Keep customer"
+          confirmLabel="Delete customer"
+          description={`This will remove "${customerToDelete.name}" from the customer records.`}
+          isPending={deleteMutation.isPending}
+          title="Delete this customer?"
+          onCancel={() => setCustomerToDelete(null)}
+          onConfirm={handleDelete}
         />
       ) : null}
     </>
