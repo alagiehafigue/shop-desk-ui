@@ -7,6 +7,7 @@ import { FeaturePlaceholderPage } from "../pages/feature-placeholder-page";
 import { SalesPage } from "../pages/sales-page";
 import { ProductsPage } from "../pages/products-page";
 import { CustomersPage } from "../pages/customers-page";
+import { InventoryPage } from "../pages/inventory-page";
 import { ProtectedRoute } from "../features/auth/protected-route";
 
 export const router = createBrowserRouter([
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
       {
         path: "customers",
         element: <CustomersPage />,
+      },
+      {
+        path: "inventory",
+        element: <InventoryPage />,
       },
       {
         path: "payments",

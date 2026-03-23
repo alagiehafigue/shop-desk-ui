@@ -7,6 +7,7 @@ import {
   HiOutlineShoppingCart,
   HiOutlineUserGroup,
 } from "react-icons/hi";
+import { HiOutlineArrowPath } from "react-icons/hi2";
 import { HiBars3 } from "react-icons/hi2";
 import { PiStorefrontBold } from "react-icons/pi";
 
@@ -16,6 +17,7 @@ const navItems = [
   { label: "Dashboard", to: "/app/dashboard", icon: HiOutlineChartBar },
   { label: "Sales", to: "/app/sales", icon: HiOutlineShoppingCart },
   { label: "Products", to: "/app/products", icon: HiOutlineArchive },
+  { label: "Inventory", to: "/app/inventory", icon: HiOutlineArrowPath },
   { label: "Customers", to: "/app/customers", icon: HiOutlineUserGroup },
   { label: "Payments", to: "/app/payments", icon: HiOutlineCreditCard },
 ];
