@@ -147,6 +147,10 @@ export function SalesPage() {
   const [discount, setDiscount] = useState("0");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
+  const [cardHolderName, setCardHolderName] = useState("");
+  const [cardLast4, setCardLast4] = useState("");
+  const [cardAuthCode, setCardAuthCode] = useState("");
   const [receipt, setReceipt] = useState(null);
   const [paymentResult, setPaymentResult] = useState(null);
 
@@ -267,6 +271,10 @@ export function SalesPage() {
     setDiscount("0");
     setPaymentMethod("cash");
     setAmountPaid("");
+    setPayerPhone("");
+    setCardHolderName("");
+    setCardLast4("");
+    setCardAuthCode("");
   };
 
   const handleCheckout = async () => {
@@ -284,6 +292,7 @@ export function SalesPage() {
       sale_id: sale.id,
       method: paymentMethod,
       amount_paid: Number(amountPaid),
+      payer_phone: paymentMethod === "momo" ? payerPhone.trim() : undefined,
     });
 
     const nextReceipt = await fetchReceipt(sale.id);
@@ -566,6 +575,63 @@ export function SalesPage() {
                   />
                 </label>
 
+                {paymentMethod === "momo" ? (
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-slate-600">
+                      Mobile Money number
+                    </span>
+                    <input
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                      placeholder="233XXXXXXXXX"
+                      type="text"
+                      value={payerPhone}
+                      onChange={(event) => setPayerPhone(event.target.value)}
+                    />
+                  </label>
+                ) : null}
+
+                {paymentMethod === "card" ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block sm:col-span-2">
+                      <span className="mb-2 block text-sm font-semibold text-slate-600">
+                        Cardholder name
+                      </span>
+                      <input
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                        placeholder="Name on card"
+                        type="text"
+                        value={cardHolderName}
+                        onChange={(event) => setCardHolderName(event.target.value)}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-slate-600">
+                        Last 4 digits
+                      </span>
+                      <input
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                        maxLength={4}
+                        placeholder="1234"
+                        type="text"
+                        value={cardLast4}
+                        onChange={(event) => setCardLast4(event.target.value)}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-slate-600">
+                        Authorization code
+                      </span>
+                      <input
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                        placeholder="Terminal reference"
+                        type="text"
+                        value={cardAuthCode}
+                        onChange={(event) => setCardAuthCode(event.target.value)}
+                      />
+                    </label>
+                  </div>
+                ) : null}
+
                 <div className="space-y-3 rounded-[24px] bg-slate-50 p-5">
                   <div className="flex items-center justify-between text-sm text-slate-500">
                     <span>Subtotal</span>
@@ -596,6 +662,11 @@ export function SalesPage() {
                   disabled={
                     !cartRows.length ||
                     !amountPaid ||
+                    (paymentMethod === "momo" && !payerPhone.trim()) ||
+                    (paymentMethod === "card" &&
+                      (!cardHolderName.trim() ||
+                        !cardLast4.trim() ||
+                        !cardAuthCode.trim())) ||
                     Number(amountPaid) < total ||
                     saleMutation.isPending ||
                     paymentMutation.isPending

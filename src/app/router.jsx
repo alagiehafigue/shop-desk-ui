@@ -9,6 +9,7 @@ import { ProductsPage } from "../pages/products-page";
 import { CustomersPage } from "../pages/customers-page";
 import { InventoryPage } from "../pages/inventory-page";
 import { ReportsPage } from "../pages/reports-page";
+import { PaymentsPage } from "../pages/payments-page";
 import { ProtectedRoute } from "../features/auth/protected-route";
 
 export const router = createBrowserRouter([
@@ -58,12 +59,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "payments",
-        element: (
-          <FeaturePlaceholderPage
-            title="Payments page is not built yet"
-            description="Payment workflows can be added after sales, once the checkout and transaction flow is in place."
-          />
-        ),
+        element: <PaymentsPage />,
       },
     ],
   },
