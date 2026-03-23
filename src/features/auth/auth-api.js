@@ -14,3 +14,13 @@ export async function logoutRequest() {
   const { data } = await apiClient.post("/auth/logout");
   return data;
 }
+
+export async function fetchUsers() {
+  const { data } = await apiClient.get("/auth/users");
+  return data;
+}
+
+export async function registerUserRequest(payload) {
+  const { data } = await apiClient.post("/auth/register", payload);
+  return data;
+}

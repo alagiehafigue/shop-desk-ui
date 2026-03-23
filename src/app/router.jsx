@@ -10,7 +10,9 @@ import { CustomersPage } from "../pages/customers-page";
 import { InventoryPage } from "../pages/inventory-page";
 import { ReportsPage } from "../pages/reports-page";
 import { PaymentsPage } from "../pages/payments-page";
+import { UsersPage } from "../pages/users-page";
 import { ProtectedRoute } from "../features/auth/protected-route";
+import { RoleRoute } from "../features/auth/role-route";
 
 export const router = createBrowserRouter([
   {
@@ -43,23 +45,51 @@ export const router = createBrowserRouter([
       },
       {
         path: "products",
-        element: <ProductsPage />,
+        element: (
+          <RoleRoute allowedRoles={["admin", "manager"]}>
+            <ProductsPage />
+          </RoleRoute>
+        ),
       },
       {
         path: "customers",
-        element: <CustomersPage />,
+        element: (
+          <RoleRoute allowedRoles={["admin", "manager"]}>
+            <CustomersPage />
+          </RoleRoute>
+        ),
       },
       {
         path: "inventory",
-        element: <InventoryPage />,
+        element: (
+          <RoleRoute allowedRoles={["admin", "manager"]}>
+            <InventoryPage />
+          </RoleRoute>
+        ),
       },
       {
         path: "reports",
-        element: <ReportsPage />,
+        element: (
+          <RoleRoute allowedRoles={["admin", "manager"]}>
+            <ReportsPage />
+          </RoleRoute>
+        ),
       },
       {
         path: "payments",
-        element: <PaymentsPage />,
+        element: (
+          <RoleRoute allowedRoles={["admin", "manager"]}>
+            <PaymentsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "users",
+        element: (
+          <RoleRoute allowedRoles={["admin"]}>
+            <UsersPage />
+          </RoleRoute>
+        ),
       },
     ],
   },

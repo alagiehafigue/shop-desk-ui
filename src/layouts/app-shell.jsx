@@ -8,24 +8,26 @@ import {
   HiOutlineShoppingCart,
   HiOutlineUserGroup,
 } from "react-icons/hi";
-import { HiOutlineArrowPath } from "react-icons/hi2";
-import { HiBars3 } from "react-icons/hi2";
+import { HiOutlineArrowPath, HiBars3, HiOutlineUserPlus } from "react-icons/hi2";
 import { PiStorefrontBold } from "react-icons/pi";
 
 import { useAuth } from "../features/auth/auth-context";
+import { canAccess } from "../features/auth/permissions";
 
 const navItems = [
-  { label: "Dashboard", to: "/app/dashboard", icon: HiOutlineChartBar },
-  { label: "Sales", to: "/app/sales", icon: HiOutlineShoppingCart },
-  { label: "Products", to: "/app/products", icon: HiOutlineArchive },
-  { label: "Inventory", to: "/app/inventory", icon: HiOutlineArrowPath },
-  { label: "Customers", to: "/app/customers", icon: HiOutlineUserGroup },
-  { label: "Reports", to: "/app/reports", icon: HiOutlinePresentationChartLine },
-  { label: "Payments", to: "/app/payments", icon: HiOutlineCreditCard },
+  { feature: "dashboard", label: "Dashboard", to: "/app/dashboard", icon: HiOutlineChartBar },
+  { feature: "sales", label: "Sales", to: "/app/sales", icon: HiOutlineShoppingCart },
+  { feature: "products", label: "Products", to: "/app/products", icon: HiOutlineArchive },
+  { feature: "inventory", label: "Inventory", to: "/app/inventory", icon: HiOutlineArrowPath },
+  { feature: "customers", label: "Customers", to: "/app/customers", icon: HiOutlineUserGroup },
+  { feature: "reports", label: "Reports", to: "/app/reports", icon: HiOutlinePresentationChartLine },
+  { feature: "payments", label: "Payments", to: "/app/payments", icon: HiOutlineCreditCard },
+  { feature: "users", label: "Users", to: "/app/users", icon: HiOutlineUserPlus },
 ];
 
 export function AppShell() {
   const { user, signOut } = useAuth();
+  const visibleNavItems = navItems.filter((item) => canAccess(user, item.feature));
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -42,7 +44,7 @@ export function AppShell() {
           </div>
 
           <nav className="mt-10 space-y-2">
-            {navItems.map(({ icon: Icon, label, to }) => (
+            {visibleNavItems.map(({ icon: Icon, label, to }) => (
               <NavLink
                 key={to}
                 className={({ isActive }) =>

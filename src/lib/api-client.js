@@ -34,8 +34,17 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const isUnauthorized = error.response?.status === 401;
     const isRefreshCall = originalRequest?.url?.includes("/auth/refresh");
+    const isAuthEntryCall =
+      originalRequest?.url?.includes("/auth/login") ||
+      originalRequest?.url?.includes("/auth/register") ||
+      originalRequest?.url?.includes("/auth/logout");
 
-    if (!isUnauthorized || originalRequest?._retry || isRefreshCall) {
+    if (
+      !isUnauthorized ||
+      originalRequest?._retry ||
+      isRefreshCall ||
+      isAuthEntryCall
+    ) {
       return Promise.reject(error);
     }
 
