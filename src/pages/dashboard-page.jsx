@@ -1,14 +1,21 @@
 import {
   HiArrowTrendingUp,
+  HiBanknotes,
   HiMiniExclamationTriangle,
   HiOutlineArrowPath,
   HiOutlineCube,
+  HiOutlineDevicePhoneMobile,
   HiOutlineShoppingCart,
   HiOutlineUsers,
 } from "react-icons/hi2";
+import { useQueries } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 
 import { useAuth } from "../features/auth/auth-context";
 import { useDashboardData } from "../features/reports/use-dashboard-data";
+import { fetchLowStockProducts } from "../features/inventory/inventory-api";
+import { fetchPendingSales } from "../features/payments/payments-api";
+import { fetchCustomers, fetchProducts } from "../features/sales/sales-api";
 import { getApiErrorMessage } from "../lib/error-utils";
 
 function formatCurrency(value) {
@@ -98,20 +105,242 @@ function DashboardSkeleton() {
 }
 
 function CashierDashboard({ user }) {
+  const [productsQuery, customersQuery, lowStockQuery, pendingSalesQuery] =
+    useQueries({
+      queries: [
+        {
+          queryKey: ["products", "list"],
+          queryFn: fetchProducts,
+        },
+        {
+          queryKey: ["customers", "list"],
+          queryFn: fetchCustomers,
+        },
+        {
+          queryKey: ["inventory", "low-stock"],
+          queryFn: fetchLowStockProducts,
+        },
+        {
+          queryKey: ["payments", "pending-sales"],
+          queryFn: fetchPendingSales,
+        },
+      ],
+    });
+
+  const isLoading =
+    productsQuery.isLoading ||
+    customersQuery.isLoading ||
+    lowStockQuery.isLoading ||
+    pendingSalesQuery.isLoading;
+
+  const firstError =
+    productsQuery.error ??
+    customersQuery.error ??
+    lowStockQuery.error ??
+    pendingSalesQuery.error;
+
+  if (firstError) {
+    return (
+      <section className="p-6 lg:p-8">
+        <ErrorState message={getApiErrorMessage(firstError)} />
+      </section>
+    );
+  }
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  const products = productsQuery.data ?? [];
+  const customers = customersQuery.data ?? [];
+  const lowStockItems = lowStockQuery.data ?? [];
+  const pendingSales = pendingSalesQuery.data ?? [];
+
   return (
     <section className="p-6 lg:p-8">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
-          Cashier Workspace
-        </p>
-        <h1 className="mt-3 text-3xl font-extrabold text-ink">
-          Welcome back, {user?.name}.
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-          Your account is ready. The reporting dashboard is reserved for admin and
-          manager roles in the current backend, so the next frontend slice should
-          be the POS sales screen for cashier workflows.
-        </p>
+      <div className="grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
+            <p className="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
+              Cashier Workspace
+            </p>
+            <h1 className="mt-3 text-3xl font-extrabold text-ink">
+              Welcome back, {user?.name}.
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+              This dashboard keeps your day focused on checkout, customer selection,
+              and stock awareness. Use the sales screen for active transactions and
+              keep an eye on products that need attention before they slow down the queue.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                className="rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white transition hover:bg-brand-700"
+                to="/app/sales"
+              >
+                Open Sales Screen
+              </Link>
+              <span className="rounded-2xl bg-slate-100 px-5 py-3 text-sm font-semibold text-slate-600">
+                Role: Cashier
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              title="Products Ready"
+              value={formatCompactNumber(products.length)}
+              subtitle="Items available in the POS catalog."
+              icon={HiOutlineCube}
+            />
+            <StatCard
+              title="Known Customers"
+              value={formatCompactNumber(customers.length)}
+              subtitle="Saved customer records for quick lookup."
+              icon={HiOutlineUsers}
+              tone="emerald"
+            />
+            <StatCard
+              title="Low Stock Alerts"
+              value={formatCompactNumber(lowStockItems.length)}
+              subtitle="Products that may affect active sales."
+              icon={HiMiniExclamationTriangle}
+              tone="amber"
+            />
+            <StatCard
+              title="Pending Payments"
+              value={formatCompactNumber(pendingSales.length)}
+              subtitle="Sales waiting to be completed."
+              icon={HiBanknotes}
+              tone="slate"
+            />
+          </div>
+
+          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-brand-600">
+                  Queue Snapshot
+                </p>
+                <h2 className="mt-2 text-2xl font-extrabold text-ink">
+                  Sales waiting for payment
+                </h2>
+              </div>
+              <Link
+                className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                to="/app/sales"
+              >
+                Go to checkout
+              </Link>
+            </div>
+
+            {pendingSales.length ? (
+              <div className="mt-6 space-y-3">
+                {pendingSales.slice(0, 5).map((sale) => (
+                  <div
+                    key={sale.id}
+                    className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-4"
+                  >
+                    <div>
+                      <p className="font-bold text-ink">{sale.customer_name || "Walk-in customer"}</p>
+                      <p className="mt-1 text-sm text-slate-500">{sale.id}</p>
+                    </div>
+                    <p className="text-lg font-extrabold text-ink">
+                      {formatCurrency(sale.total_amount)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6">
+                <EmptyState
+                  title="No pending payments"
+                  description="All recorded sales are currently settled. New pending sales will appear here automatically."
+                />
+              </div>
+            )}
+          </article>
+        </div>
+
+        <div className="space-y-6">
+          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-brand-600">
+                  Low Stock
+                </p>
+                <h2 className="mt-2 text-xl font-extrabold text-ink">
+                  Items to watch during checkout
+                </h2>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                <HiOutlineArrowPath className="text-xl" />
+              </div>
+            </div>
+
+            {lowStockItems.length ? (
+              <div className="mt-6 space-y-3">
+                {lowStockItems.slice(0, 5).map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-4"
+                  >
+                    <div>
+                      <p className="font-bold text-ink">{item.name}</p>
+                      <p className="mt-1 text-sm text-slate-500">Restock may be needed soon</p>
+                    </div>
+                    <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                        Stock
+                      </p>
+                      <p className="text-lg font-extrabold text-amber-600">
+                        {item.stock_quantity}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6">
+                <EmptyState
+                  title="Inventory looks healthy"
+                  description="No products are currently at or below the stock threshold."
+                />
+              </div>
+            )}
+          </article>
+
+          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-brand-600">
+                  Accepted Payments
+                </p>
+                <h2 className="mt-2 text-xl font-extrabold text-ink">
+                  Checkout options at a glance
+                </h2>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-brand-600">
+                <HiOutlineDevicePhoneMobile className="text-xl" />
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {[
+                "Cash for standard till payments",
+                "Mobile Money for local digital checkout",
+                "Card with terminal approval reference",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-slate-100 px-4 py-4 text-sm font-semibold text-slate-700"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </article>
+        </div>
       </div>
     </section>
   );
