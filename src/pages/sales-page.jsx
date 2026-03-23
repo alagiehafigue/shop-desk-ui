@@ -29,6 +29,207 @@ function formatCurrency(value) {
   }).format(Number(value ?? 0));
 }
 
+function formatDateTime(value) {
+  if (!value) {
+    return "Unknown";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function getPaymentDetails(paymentResult) {
+  if (!paymentResult) {
+    return [];
+  }
+
+  const details = [];
+
+  if (paymentResult.method === "momo") {
+    if (paymentResult.momo_reference_id) {
+      details.push({
+        label: "MoMo Reference",
+        value: paymentResult.momo_reference_id,
+      });
+    }
+
+    if (paymentResult.momo_currency) {
+      details.push({
+        label: "Collection Currency",
+        value: paymentResult.momo_currency,
+      });
+    }
+  }
+
+  if (paymentResult.method === "card") {
+    if (paymentResult.card_reference_id) {
+      details.push({
+        label: "Terminal Reference",
+        value: paymentResult.card_reference_id,
+      });
+    }
+
+    if (paymentResult.card_approval_code) {
+      details.push({
+        label: "Approval Code",
+        value: paymentResult.card_approval_code,
+      });
+    }
+
+    if (paymentResult.card_last4) {
+      details.push({
+        label: "Card",
+        value: `**** ${paymentResult.card_last4}`,
+      });
+    }
+  }
+
+  return details;
+}
+
+function openReceiptPrintWindow({ paymentResult, receipt }) {
+  const paymentDetails = getPaymentDetails(paymentResult);
+  const paymentDetailsMarkup = paymentDetails
+    .map(
+      (detail) => `
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-top:8px;">
+          <span style="color:#64748b;">${detail.label}</span>
+          <strong style="text-align:right;">${detail.value}</strong>
+        </div>
+      `,
+    )
+    .join("");
+
+  const itemsMarkup = receipt.items
+    .map(
+      (item) => `
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #e2e8f0;">
+          <div>
+            <div style="font-weight:700;">${item.name}</div>
+            <div style="font-size:12px;color:#64748b;">${item.quantity} x ${formatCurrency(item.price)}</div>
+          </div>
+          <div style="font-weight:700;">${formatCurrency(item.subtotal)}</div>
+        </div>
+      `,
+    )
+    .join("");
+
+  const printWindow = window.open("", "_blank", "width=720,height=900");
+
+  if (!printWindow) {
+    return;
+  }
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Receipt ${receipt.transaction_id}</title>
+        <style>
+          body {
+            font-family: "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 32px;
+            color: #0f172a;
+            background: #ffffff;
+          }
+          .card {
+            max-width: 640px;
+            margin: 0 auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 24px;
+          }
+          .muted {
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            font-weight: 700;
+          }
+          .title {
+            font-size: 32px;
+            font-weight: 800;
+            margin: 8px 0 4px;
+          }
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 16px;
+            margin-top: 24px;
+          }
+          .totals {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 16px;
+            margin-top: 24px;
+          }
+          .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 10px;
+          }
+          .row.total {
+            border-top: 1px solid #cbd5e1;
+            padding-top: 12px;
+            font-size: 18px;
+            font-weight: 800;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="muted">Receipt</div>
+          <div class="title">${receipt.store}</div>
+          <div style="color:#64748b;">Transaction ID: ${receipt.transaction_id}</div>
+          <div style="color:#64748b;margin-top:6px;">${formatDateTime(receipt.date)}</div>
+
+          <div class="grid">
+            <div>
+              <div class="muted">Cashier</div>
+              <div style="margin-top:8px;font-weight:700;">${receipt.cashier ?? "Unknown"}</div>
+            </div>
+            <div>
+              <div class="muted">Payment Method</div>
+              <div style="margin-top:8px;font-weight:700;text-transform:uppercase;">${receipt.payment_method ?? paymentResult.method}</div>
+            </div>
+            <div>
+              <div class="muted">Amount Paid</div>
+              <div style="margin-top:8px;font-weight:700;">${formatCurrency(paymentResult.amount_paid)}</div>
+            </div>
+            <div>
+              <div class="muted">Change</div>
+              <div style="margin-top:8px;font-weight:700;">${formatCurrency(paymentResult.change)}</div>
+            </div>
+          </div>
+
+          ${paymentDetails.length ? `<div class="totals"><div class="muted">Payment Details</div>${paymentDetailsMarkup}</div>` : ""}
+
+          <div style="margin-top:24px;border:1px solid #e2e8f0;border-radius:18px;padding:16px;">
+            <div class="muted">Items</div>
+            <div style="margin-top:12px;">${itemsMarkup}</div>
+          </div>
+
+          <div class="totals">
+            <div class="row"><span style="color:#64748b;">Discount</span><span>${formatCurrency(receipt.discount)}</span></div>
+            <div class="row"><span style="color:#64748b;">Tax</span><span>${formatCurrency(receipt.tax)}</span></div>
+            <div class="row total"><span>Total</span><span>${formatCurrency(receipt.total)}</span></div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+
 function ProductGridSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -47,6 +248,8 @@ function ReceiptModal({ receipt, paymentResult, onClose }) {
     return null;
   }
 
+  const paymentDetails = getPaymentDetails(paymentResult);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8">
       <div className="max-h-full w-full max-w-2xl overflow-auto rounded-[28px] bg-white p-6 shadow-2xl">
@@ -59,14 +262,24 @@ function ReceiptModal({ receipt, paymentResult, onClose }) {
             <p className="mt-2 text-sm text-slate-500">
               Transaction ID: {receipt.transaction_id}
             </p>
+            <p className="mt-1 text-sm text-slate-500">{formatDateTime(receipt.date)}</p>
           </div>
-          <button
-            className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
-            type="button"
-            onClick={onClose}
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              className="rounded-2xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              type="button"
+              onClick={() => openReceiptPrintWindow({ paymentResult, receipt })}
+            >
+              Print Receipt
+            </button>
+            <button
+              className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
+              type="button"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 rounded-[24px] bg-slate-50 p-5 md:grid-cols-2">
@@ -95,6 +308,25 @@ function ReceiptModal({ receipt, paymentResult, onClose }) {
             <p className="mt-2 font-bold text-ink">{formatCurrency(paymentResult.change)}</p>
           </div>
         </div>
+
+        {paymentDetails.length ? (
+          <div className="mt-6 rounded-[24px] bg-slate-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Payment Details
+            </p>
+            <div className="mt-3 space-y-3">
+              {paymentDetails.map((detail) => (
+                <div
+                  key={detail.label}
+                  className="flex items-center justify-between gap-4 text-sm"
+                >
+                  <span className="text-slate-500">{detail.label}</span>
+                  <span className="font-semibold text-ink">{detail.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-6 rounded-[24px] border border-slate-200">
           <div className="border-b border-slate-200 px-5 py-4">
