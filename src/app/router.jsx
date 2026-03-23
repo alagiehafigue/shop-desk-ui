@@ -4,6 +4,7 @@ import { AppShell } from "../layouts/app-shell";
 import { LoginPage } from "../pages/login-page";
 import { DashboardPage } from "../pages/dashboard-page";
 import { FeaturePlaceholderPage } from "../pages/feature-placeholder-page";
+import { SalesPage } from "../pages/sales-page";
 import { ProtectedRoute } from "../features/auth/protected-route";
 
 export const router = createBrowserRouter([
@@ -33,12 +34,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "sales",
-        element: (
-          <FeaturePlaceholderPage
-            title="Sales screen is next"
-            description="The dashboard is now live. The next isolated feature can be the POS sales experience, built against your existing sales and payments backend."
-          />
-        ),
+        element: <SalesPage />,
       },
       {
         path: "products",
