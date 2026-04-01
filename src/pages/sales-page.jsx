@@ -383,6 +383,7 @@ export function SalesPage() {
   const [cardHolderName, setCardHolderName] = useState("");
   const [cardLast4, setCardLast4] = useState("");
   const [cardAuthCode, setCardAuthCode] = useState("");
+  const [activeSaleId, setActiveSaleId] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [paymentResult, setPaymentResult] = useState(null);
 
@@ -426,6 +427,7 @@ export function SalesPage() {
   const total = Math.max(subtotal + taxAmount - discountAmount, 0);
   const selectedCustomer =
     customers.find((customer) => customer.id === selectedCustomerId) ?? null;
+  const hasPendingCheckout = Boolean(activeSaleId);
 
   const saleMutation = useMutation({
     mutationFn: createSale,
@@ -436,6 +438,10 @@ export function SalesPage() {
   });
 
   const addToCart = (product) => {
+    if (hasPendingCheckout) {
+      return;
+    }
+
     if (Number(product.stock_quantity) <= 0) {
       return;
     }
@@ -468,6 +474,10 @@ export function SalesPage() {
   };
 
   const updateQuantity = (productId, nextQuantity) => {
+    if (hasPendingCheckout) {
+      return;
+    }
+
     const product = products.find((item) => item.id === productId);
     const normalizedQuantity = Number(nextQuantity);
 
@@ -493,6 +503,10 @@ export function SalesPage() {
   };
 
   const removeFromCart = (productId) => {
+    if (hasPendingCheckout) {
+      return;
+    }
+
     setCartItems((current) => current.filter((item) => item.productId !== productId));
   };
 
@@ -507,43 +521,56 @@ export function SalesPage() {
     setCardHolderName("");
     setCardLast4("");
     setCardAuthCode("");
+    setActiveSaleId(null);
   };
 
   const handleCheckout = async () => {
-    const sale = await saleMutation.mutateAsync({
-      customer_id: selectedCustomerId || null,
-      tax: taxAmount,
-      discount: discountAmount,
-      items: cartItems.map((item) => ({
-        product_id: item.productId,
-        quantity: item.quantity,
-      })),
-    });
+    let saleId = activeSaleId;
 
-    const payment = await paymentMutation.mutateAsync({
-      sale_id: sale.id,
-      method: paymentMethod,
-      amount_paid: Number(amountPaid),
-      card_auth_code: paymentMethod === "card" ? cardAuthCode.trim() : undefined,
-      card_holder_name: paymentMethod === "card" ? cardHolderName.trim() : undefined,
-      card_last4:
-        paymentMethod === "card" ? cardLast4.replace(/\D/g, "") : undefined,
-      payer_phone: paymentMethod === "momo" ? payerPhone.trim() : undefined,
-    });
+    try {
+      if (!saleId) {
+        const sale = await saleMutation.mutateAsync({
+          customer_id: selectedCustomerId || null,
+          tax: taxAmount,
+          discount: discountAmount,
+          items: cartItems.map((item) => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+          })),
+        });
 
-    const nextReceipt = await fetchReceipt(sale.id);
+        saleId = sale.id;
+        setActiveSaleId(sale.id);
+      }
 
-    setReceipt(nextReceipt);
-    setPaymentResult(payment);
-    clearSaleState();
+      const payment = await paymentMutation.mutateAsync({
+        sale_id: saleId,
+        method: paymentMethod,
+        amount_paid: Number(amountPaid),
+        card_auth_code: paymentMethod === "card" ? cardAuthCode.trim() : undefined,
+        card_holder_name: paymentMethod === "card" ? cardHolderName.trim() : undefined,
+        card_last4:
+          paymentMethod === "card" ? cardLast4.replace(/\D/g, "") : undefined,
+        payer_phone: paymentMethod === "momo" ? payerPhone.trim() : undefined,
+      });
 
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["products", "list"] }),
-      queryClient.invalidateQueries({ queryKey: ["reports", "daily-sales"] }),
-      queryClient.invalidateQueries({ queryKey: ["reports", "weekly-sales"] }),
-      queryClient.invalidateQueries({ queryKey: ["reports", "product-performance"] }),
-      queryClient.invalidateQueries({ queryKey: ["reports", "inventory"] }),
-    ]);
+      const nextReceipt = await fetchReceipt(saleId);
+
+      setReceipt(nextReceipt);
+      setPaymentResult(payment);
+      clearSaleState();
+    } finally {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["products", "list"] }),
+        queryClient.invalidateQueries({ queryKey: ["payments", "list"] }),
+        queryClient.invalidateQueries({ queryKey: ["payments", "summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["payments", "pending-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "daily-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "weekly-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "product-performance"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "inventory"] }),
+      ]);
+    }
   };
 
   const mutationError = saleMutation.error ?? paymentMutation.error;
@@ -726,6 +753,7 @@ export function SalesPage() {
                   </span>
                   <select
                     className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                    disabled={hasPendingCheckout}
                     value={selectedCustomerId}
                     onChange={(event) => setSelectedCustomerId(event.target.value)}
                   >
@@ -745,6 +773,13 @@ export function SalesPage() {
                   </div>
                 ) : null}
 
+                {hasPendingCheckout ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Payment retry is attached to sale {activeSaleId}. Finish this payment so
+                    the same sale is updated instead of creating a new pending one.
+                  </div>
+                ) : null}
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
                     <span className="mb-2 block text-sm font-semibold text-slate-600">
@@ -752,6 +787,7 @@ export function SalesPage() {
                     </span>
                     <input
                       className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                      disabled={hasPendingCheckout}
                       min="0"
                       step="0.01"
                       type="number"
@@ -765,6 +801,7 @@ export function SalesPage() {
                     </span>
                     <input
                       className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                      disabled={hasPendingCheckout}
                       min="0"
                       step="0.01"
                       type="number"
