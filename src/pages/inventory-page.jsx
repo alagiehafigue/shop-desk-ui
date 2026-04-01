@@ -18,7 +18,7 @@ function formatDate(value) {
     return "Unknown date";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-GH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));

@@ -28,9 +28,9 @@ const initialFormValues = {
 };
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-GH", {
     style: "currency",
-    currency: "USD",
+    currency: "GHS",
   }).format(Number(value ?? 0));
 }
 
@@ -39,7 +39,7 @@ function formatDate(value) {
     return "Unknown date";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-GH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));

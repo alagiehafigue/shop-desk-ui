@@ -174,7 +174,7 @@ export function UsersPage() {
                       {user.role}
                     </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {new Intl.DateTimeFormat("en-US", {
+                      {new Intl.DateTimeFormat("en-GH", {
                         dateStyle: "medium",
                       }).format(new Date(user.created_at))}
                     </p>

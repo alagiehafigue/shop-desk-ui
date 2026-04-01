@@ -21,23 +21,23 @@ import { getApiErrorMessage } from "../lib/error-utils";
 function formatCurrency(value) {
   const amount = Number(value ?? 0);
 
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-GH", {
     style: "currency",
-    currency: "USD",
+    currency: "GHS",
   }).format(amount);
 }
 
 function formatCompactNumber(value) {
   const amount = Number(value ?? 0);
 
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-GH", {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(amount);
 }
 
 function buildWeeklyChartData(rows) {
-  const formatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
+  const formatter = new Intl.DateTimeFormat("en-GH", { weekday: "short" });
 
   if (!rows?.length) {
     return [];
