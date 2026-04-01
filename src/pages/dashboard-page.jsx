@@ -8,15 +8,18 @@ import {
   HiOutlineShoppingCart,
   HiOutlineUsers,
 } from "react-icons/hi2";
+import { useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
+import { PaginationControls } from "../components/pagination-controls";
 import { useAuth } from "../features/auth/auth-context";
 import { useDashboardData } from "../features/reports/use-dashboard-data";
 import { fetchLowStockProducts } from "../features/inventory/inventory-api";
 import { fetchPendingSales } from "../features/payments/payments-api";
 import { fetchCustomers, fetchProducts } from "../features/sales/sales-api";
 import { getApiErrorMessage } from "../lib/error-utils";
+import { paginateItems } from "../lib/pagination";
 
 function formatCurrency(value) {
   const amount = Number(value ?? 0);
@@ -112,6 +115,8 @@ function DashboardSkeleton() {
 }
 
 function CashierDashboard({ user }) {
+  const [pendingSalesPage, setPendingSalesPage] = useState(1);
+  const [lowStockPage, setLowStockPage] = useState(1);
   const [productsQuery, customersQuery, lowStockQuery, pendingSalesQuery] =
     useQueries({
       queries: [
@@ -162,6 +167,8 @@ function CashierDashboard({ user }) {
   const customers = customersQuery.data ?? [];
   const lowStockItems = lowStockQuery.data ?? [];
   const pendingSales = pendingSalesQuery.data ?? [];
+  const paginatedPendingSales = paginateItems(pendingSales, pendingSalesPage, 4);
+  const paginatedLowStockItems = paginateItems(lowStockItems, lowStockPage, 4);
 
   return (
     <section className='p-6 lg:p-8'>
@@ -244,7 +251,7 @@ function CashierDashboard({ user }) {
 
             {pendingSales.length ? (
               <div className='mt-6 space-y-3'>
-                {pendingSales.slice(0, 5).map((sale) => (
+                {paginatedPendingSales.items.map((sale) => (
                   <div
                     key={sale.id}
                     className='flex flex-col gap-3 rounded-2xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between'
@@ -269,6 +276,15 @@ function CashierDashboard({ user }) {
                 />
               </div>
             )}
+
+            <PaginationControls
+              currentPage={paginatedPendingSales.currentPage}
+              itemLabel='sales'
+              pageSize={4}
+              totalItems={paginatedPendingSales.totalItems}
+              totalPages={paginatedPendingSales.totalPages}
+              onPageChange={setPendingSalesPage}
+            />
           </article>
         </div>
 
@@ -290,7 +306,7 @@ function CashierDashboard({ user }) {
 
             {lowStockItems.length ? (
               <div className='mt-6 space-y-3'>
-                {lowStockItems.slice(0, 5).map((item) => (
+                {paginatedLowStockItems.items.map((item) => (
                   <div
                     key={item.id}
                     className='flex flex-col gap-3 rounded-2xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between'
@@ -320,6 +336,15 @@ function CashierDashboard({ user }) {
                 />
               </div>
             )}
+
+            <PaginationControls
+              currentPage={paginatedLowStockItems.currentPage}
+              itemLabel='products'
+              pageSize={4}
+              totalItems={paginatedLowStockItems.totalItems}
+              totalPages={paginatedLowStockItems.totalPages}
+              onPageChange={setLowStockPage}
+            />
           </article>
 
           <article className='rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm'>
@@ -384,6 +409,8 @@ function ErrorState({ message }) {
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const [managerLowStockPage, setManagerLowStockPage] = useState(1);
+  const [topProductsPage, setTopProductsPage] = useState(1);
   const canViewReports = ["admin", "manager"].includes(user?.role);
   const {
     dailySalesQuery,
@@ -420,11 +447,21 @@ export function DashboardPage() {
   const weeklySales = weeklySalesQuery.data ?? [];
   const productPerformance = productPerformanceQuery.data ?? [];
   const inventory = inventoryQuery.data ?? [];
-  const lowStockItems = inventory
-    .filter((item) => Number(item.stock_quantity) <= 10)
-    .slice(0, 5);
+  const lowStockItems = inventory.filter(
+    (item) => Number(item.stock_quantity) <= 10,
+  );
   const topProduct = productPerformance[0];
   const weeklyChartData = buildWeeklyChartData(weeklySales);
+  const paginatedLowStockItems = paginateItems(
+    lowStockItems,
+    managerLowStockPage,
+    4,
+  );
+  const paginatedTopProducts = paginateItems(
+    productPerformance,
+    topProductsPage,
+    4,
+  );
   const totalWeeklySales = weeklySales.reduce(
     (sum, row) => sum + Number(row.sales ?? 0),
     0,
@@ -548,7 +585,7 @@ export function DashboardPage() {
 
             {lowStockItems.length ? (
               <div className='mt-6 space-y-3'>
-                {lowStockItems.map((item) => (
+                {paginatedLowStockItems.items.map((item) => (
                   <div
                     key={item.id}
                     className='flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-4'
@@ -578,6 +615,15 @@ export function DashboardPage() {
                 />
               </div>
             )}
+
+            <PaginationControls
+              currentPage={paginatedLowStockItems.currentPage}
+              itemLabel='products'
+              pageSize={4}
+              totalItems={paginatedLowStockItems.totalItems}
+              totalPages={paginatedLowStockItems.totalPages}
+              onPageChange={setManagerLowStockPage}
+            />
           </article>
 
           <article className='rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm'>
@@ -597,14 +643,14 @@ export function DashboardPage() {
 
             {productPerformance.length ? (
               <div className='mt-6 space-y-3'>
-                {productPerformance.slice(0, 5).map((product, index) => (
+                {paginatedTopProducts.items.map((product, index) => (
                   <div
                     key={product.id}
                     className='flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-4'
                   >
                     <div className='flex items-center gap-4'>
                       <div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-sm font-extrabold text-slate-700'>
-                        {index + 1}
+                        {(paginatedTopProducts.currentPage - 1) * 4 + index + 1}
                       </div>
                       <div>
                         <p className='font-bold text-ink'>{product.name}</p>
@@ -627,6 +673,15 @@ export function DashboardPage() {
                 />
               </div>
             )}
+
+            <PaginationControls
+              currentPage={paginatedTopProducts.currentPage}
+              itemLabel='products'
+              pageSize={4}
+              totalItems={paginatedTopProducts.totalItems}
+              totalPages={paginatedTopProducts.totalPages}
+              onPageChange={setTopProductsPage}
+            />
           </article>
         </div>
       </div>

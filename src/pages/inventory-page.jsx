@@ -9,9 +9,11 @@ import {
   HiOutlineScale,
 } from "react-icons/hi2";
 
+import { PaginationControls } from "../components/pagination-controls";
 import { getApiErrorMessage } from "../lib/error-utils";
 import { useInventoryData, useInventoryLogs } from "../features/inventory/use-inventory-data";
 import { adjustStock, restockProduct } from "../features/inventory/inventory-api";
+import { paginateItems } from "../lib/pagination";
 
 function formatDate(value) {
   if (!value) {
@@ -200,6 +202,8 @@ export function InventoryPage() {
   const queryClient = useQueryClient();
   const { productsQuery, lowStockQuery, isLoading } = useInventoryData();
   const [searchTerm, setSearchTerm] = useState("");
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const [watchlistPage, setWatchlistPage] = useState(1);
   const [activeProduct, setActiveProduct] = useState(null);
   const [actionMode, setActionMode] = useState(null);
   const [logsProduct, setLogsProduct] = useState(null);
@@ -253,6 +257,14 @@ export function InventoryPage() {
   }, [products, searchTerm]);
 
   const mutationError = restockMutation.error ?? adjustMutation.error;
+  const paginatedProducts = useMemo(
+    () => paginateItems(visibleProducts, inventoryPage, 8),
+    [inventoryPage, visibleProducts],
+  );
+  const paginatedWatchlist = useMemo(
+    () => paginateItems(lowStockProducts, watchlistPage, 4),
+    [lowStockProducts, watchlistPage],
+  );
 
   const openActionModal = (mode, product) => {
     setActionMode(mode);
@@ -323,7 +335,10 @@ export function InventoryPage() {
                     placeholder="Search inventory"
                     type="text"
                     value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
+                    onChange={(event) => {
+                      setSearchTerm(event.target.value);
+                      setInventoryPage(1);
+                    }}
                   />
                 </label>
               </div>
@@ -357,7 +372,7 @@ export function InventoryPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {visibleProducts.map((product) => {
+                      {paginatedProducts.items.map((product) => {
                         const stock = Number(product.stock_quantity ?? 0);
                         const badgeClass =
                           stock <= 0
@@ -424,6 +439,15 @@ export function InventoryPage() {
                   </p>
                 </div>
               )}
+
+              <PaginationControls
+                currentPage={paginatedProducts.currentPage}
+                itemLabel="products"
+                pageSize={8}
+                totalItems={paginatedProducts.totalItems}
+                totalPages={paginatedProducts.totalPages}
+                onPageChange={setInventoryPage}
+              />
             </div>
           </div>
 
@@ -479,7 +503,7 @@ export function InventoryPage() {
                 </div>
               ) : lowStockProducts.length ? (
                 <div className="mt-6 space-y-3">
-                  {lowStockProducts.slice(0, 6).map((product) => (
+                  {paginatedWatchlist.items.map((product) => (
                     <div
                       key={product.id}
                       className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-4"
@@ -509,6 +533,15 @@ export function InventoryPage() {
                   </p>
                 </div>
               )}
+
+              <PaginationControls
+                currentPage={paginatedWatchlist.currentPage}
+                itemLabel="products"
+                pageSize={4}
+                totalItems={paginatedWatchlist.totalItems}
+                totalPages={paginatedWatchlist.totalPages}
+                onPageChange={setWatchlistPage}
+              />
             </div>
 
             {mutationError ? (

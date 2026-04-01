@@ -7,9 +7,11 @@ import {
   HiOutlineReceiptPercent,
 } from "react-icons/hi2";
 
+import { PaginationControls } from "../components/pagination-controls";
 import { getApiErrorMessage } from "../lib/error-utils";
 import { processPayment } from "../features/payments/payments-api";
 import { usePaymentsData } from "../features/payments/use-payments-data";
+import { paginateItems } from "../lib/pagination";
 
 const paymentMethods = [
   {
@@ -237,6 +239,8 @@ export function PaymentsPage() {
     usePaymentsData();
   const [selectedSale, setSelectedSale] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("momo");
+  const [pendingSalesPage, setPendingSalesPage] = useState(1);
+  const [paymentsPage, setPaymentsPage] = useState(1);
   const [formValues, setFormValues] = useState({
     amount_paid: "",
     payer_phone: "",
@@ -248,6 +252,14 @@ export function PaymentsPage() {
   const payments = paymentsQuery.data ?? [];
   const pendingSales = pendingSalesQuery.data ?? [];
   const summary = summaryQuery.data ?? [];
+  const paginatedPendingSales = useMemo(
+    () => paginateItems(pendingSales, pendingSalesPage, 4),
+    [pendingSales, pendingSalesPage],
+  );
+  const paginatedPayments = useMemo(
+    () => paginateItems(payments, paymentsPage, 6),
+    [payments, paymentsPage],
+  );
 
   const paymentMutation = useMutation({
     mutationFn: processPayment,
@@ -464,7 +476,7 @@ export function PaymentsPage() {
                   </div>
                 ) : pendingSales.length ? (
                   <div className="divide-y divide-slate-100">
-                    {pendingSales.map((sale) => (
+                    {paginatedPendingSales.items.map((sale) => (
                       <div
                         key={sale.id}
                         className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between"
@@ -501,6 +513,15 @@ export function PaymentsPage() {
                     </p>
                   </div>
                 )}
+
+                <PaginationControls
+                  currentPage={paginatedPendingSales.currentPage}
+                  itemLabel="sales"
+                  pageSize={4}
+                  totalItems={paginatedPendingSales.totalItems}
+                  totalPages={paginatedPendingSales.totalPages}
+                  onPageChange={setPendingSalesPage}
+                />
               </div>
 
               <div className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
@@ -520,7 +541,7 @@ export function PaymentsPage() {
                   </div>
                 ) : payments.length ? (
                   <div className="divide-y divide-slate-100">
-                    {payments.slice(0, 8).map((payment) => (
+                    {paginatedPayments.items.map((payment) => (
                       <div
                         key={payment.id}
                         className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between"
@@ -548,6 +569,15 @@ export function PaymentsPage() {
                     </p>
                   </div>
                 )}
+
+                <PaginationControls
+                  currentPage={paginatedPayments.currentPage}
+                  itemLabel="payments"
+                  pageSize={6}
+                  totalItems={paginatedPayments.totalItems}
+                  totalPages={paginatedPayments.totalPages}
+                  onPageChange={setPaymentsPage}
+                />
               </div>
             </div>
           </div>

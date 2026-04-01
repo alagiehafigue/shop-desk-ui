@@ -16,7 +16,9 @@ import {
   updateProduct,
 } from "../features/products/products-api";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { PaginationControls } from "../components/pagination-controls";
 import { getApiErrorMessage } from "../lib/error-utils";
+import { paginateItems } from "../lib/pagination";
 
 const initialFormValues = {
   name: "",
@@ -215,6 +217,7 @@ export function ProductsPage() {
   const { user } = useAuth();
   const { productsQuery, lowStockQuery, isLoading } = useProductsData();
   const [searchTerm, setSearchTerm] = useState("");
+  const [catalogPage, setCatalogPage] = useState(1);
   const [modalMode, setModalMode] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [formValues, setFormValues] = useState(initialFormValues);
@@ -272,6 +275,10 @@ export function ProductsPage() {
 
   const mutationError =
     createMutation.error ?? updateMutation.error ?? deleteMutation.error;
+  const paginatedProducts = useMemo(
+    () => paginateItems(visibleProducts, catalogPage, 8),
+    [catalogPage, visibleProducts],
+  );
 
   const openCreateModal = () => {
     setModalMode("create");
@@ -384,7 +391,10 @@ export function ProductsPage() {
                       placeholder="Search products"
                       type="text"
                       value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
+                      onChange={(event) => {
+                        setSearchTerm(event.target.value);
+                        setCatalogPage(1);
+                      }}
                     />
                   </label>
 
@@ -441,7 +451,7 @@ export function ProductsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {visibleProducts.map((product) => {
+                      {paginatedProducts.items.map((product) => {
                         const stock = Number(product.stock_quantity ?? 0);
                         const statusClass =
                           stock <= 0
@@ -510,6 +520,15 @@ export function ProductsPage() {
                   </p>
                 </div>
               )}
+
+              <PaginationControls
+                currentPage={paginatedProducts.currentPage}
+                itemLabel="products"
+                pageSize={8}
+                totalItems={paginatedProducts.totalItems}
+                totalPages={paginatedProducts.totalPages}
+                onPageChange={setCatalogPage}
+              />
             </div>
           </div>
 

@@ -6,9 +6,11 @@ import {
   HiOutlineUsers,
 } from "react-icons/hi2";
 
+import { PaginationControls } from "../components/pagination-controls";
 import { useAuth } from "../features/auth/auth-context";
 import { useDashboardData } from "../features/reports/use-dashboard-data";
 import { getApiErrorMessage } from "../lib/error-utils";
+import { paginateItems } from "../lib/pagination";
 
 const tabs = [
   { id: "daily", label: "Daily Sales", icon: HiArrowTrendingUp },
@@ -149,6 +151,7 @@ function ReportsContent({
   productPerformance,
   weeklySales,
 }) {
+  const [reportPage, setReportPage] = useState(1);
   const dailySummary = dailySales[0];
   const inventorySummary = useMemo(
     () => ({
@@ -205,7 +208,8 @@ function ReportsContent({
           />
         );
 
-      case "weekly":
+      case "weekly": {
+        const paginatedWeeklySales = paginateItems(weeklySales, reportPage, 8);
         return weeklySales.length ? (
           <div className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-6 py-5">
@@ -221,7 +225,7 @@ function ReportsContent({
                   </tr>
                 </thead>
                 <tbody>
-                  {weeklySales.map((row) => (
+                  {paginatedWeeklySales.items.map((row) => (
                     <tr key={row.date} className="border-t border-slate-100">
                       <td className="px-6 py-4 font-semibold text-ink">{formatDate(row.date)}</td>
                       <td className="px-6 py-4 text-slate-600">{row.transactions}</td>
@@ -233,6 +237,14 @@ function ReportsContent({
                 </tbody>
               </table>
             </div>
+            <PaginationControls
+              currentPage={paginatedWeeklySales.currentPage}
+              itemLabel="days"
+              pageSize={8}
+              totalItems={paginatedWeeklySales.totalItems}
+              totalPages={paginatedWeeklySales.totalPages}
+              onPageChange={setReportPage}
+            />
           </div>
         ) : (
           <EmptyPanel
@@ -240,8 +252,10 @@ function ReportsContent({
             description="The last 7 days of sales activity will appear here once completed sales exist."
           />
         );
+      }
 
-      case "products":
+      case "products": {
+        const paginatedProducts = paginateItems(productPerformance, reportPage, 8);
         return productPerformance.length ? (
           <div className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-6 py-5">
@@ -257,7 +271,7 @@ function ReportsContent({
                   </tr>
                 </thead>
                 <tbody>
-                  {productPerformance.map((product) => (
+                  {paginatedProducts.items.map((product) => (
                     <tr key={product.id} className="border-t border-slate-100">
                       <td className="px-6 py-4 font-semibold text-ink">{product.name}</td>
                       <td className="px-6 py-4 text-slate-600">{product.total_sold}</td>
@@ -269,6 +283,14 @@ function ReportsContent({
                 </tbody>
               </table>
             </div>
+            <PaginationControls
+              currentPage={paginatedProducts.currentPage}
+              itemLabel="products"
+              pageSize={8}
+              totalItems={paginatedProducts.totalItems}
+              totalPages={paginatedProducts.totalPages}
+              onPageChange={setReportPage}
+            />
           </div>
         ) : (
           <EmptyPanel
@@ -276,8 +298,10 @@ function ReportsContent({
             description="Product performance will populate when completed sales include sale items."
           />
         );
+      }
 
-      case "inventory":
+      case "inventory": {
+        const paginatedInventory = paginateItems(inventory, reportPage, 8);
         return inventory.length ? (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
@@ -312,7 +336,7 @@ function ReportsContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {inventory.map((item) => (
+                    {paginatedInventory.items.map((item) => (
                       <tr key={item.id} className="border-t border-slate-100">
                         <td className="px-6 py-4 font-semibold text-ink">{item.name}</td>
                         <td className="px-6 py-4 text-slate-600">{formatCurrency(item.price)}</td>
@@ -324,6 +348,14 @@ function ReportsContent({
                   </tbody>
                 </table>
               </div>
+              <PaginationControls
+                currentPage={paginatedInventory.currentPage}
+                itemLabel="products"
+                pageSize={8}
+                totalItems={paginatedInventory.totalItems}
+                totalPages={paginatedInventory.totalPages}
+                onPageChange={setReportPage}
+              />
             </div>
           </div>
         ) : (
@@ -332,8 +364,10 @@ function ReportsContent({
             description="Inventory records will appear once products exist in the catalog."
           />
         );
+      }
 
-      case "cashiers":
+      case "cashiers": {
+        const paginatedCashierSales = paginateItems(cashierSales, reportPage, 8);
         return cashierSales.length ? (
           <div className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-6 py-5">
@@ -349,7 +383,7 @@ function ReportsContent({
                   </tr>
                 </thead>
                 <tbody>
-                  {cashierSales.map((cashier) => (
+                  {paginatedCashierSales.items.map((cashier) => (
                     <tr key={cashier.id} className="border-t border-slate-100">
                       <td className="px-6 py-4 font-semibold text-ink">{cashier.name}</td>
                       <td className="px-6 py-4 text-slate-600">{cashier.total_transactions}</td>
@@ -361,6 +395,14 @@ function ReportsContent({
                 </tbody>
               </table>
             </div>
+            <PaginationControls
+              currentPage={paginatedCashierSales.currentPage}
+              itemLabel="cashiers"
+              pageSize={8}
+              totalItems={paginatedCashierSales.totalItems}
+              totalPages={paginatedCashierSales.totalPages}
+              onPageChange={setReportPage}
+            />
           </div>
         ) : (
           <EmptyPanel
@@ -368,6 +410,7 @@ function ReportsContent({
             description="Cashier sales performance will appear here once sales have been recorded for store users."
           />
         );
+      }
 
       default:
         return null;
@@ -394,7 +437,10 @@ function ReportsContent({
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
                 type="button"
-                onClick={() => onTabChange(id)}
+                onClick={() => {
+                  setReportPage(1);
+                  onTabChange(id);
+                }}
               >
                 <Icon className="shrink-0 text-lg" />
                 {label}

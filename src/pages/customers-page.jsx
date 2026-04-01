@@ -10,6 +10,7 @@ import {
 } from "react-icons/hi2";
 
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { PaginationControls } from "../components/pagination-controls";
 import { getApiErrorMessage } from "../lib/error-utils";
 import {
   createCustomer,
@@ -20,6 +21,7 @@ import {
   useCustomerSales,
   useCustomersData,
 } from "../features/customers/use-customers-data";
+import { paginateItems } from "../lib/pagination";
 
 const initialFormValues = {
   name: "",
@@ -232,6 +234,8 @@ export function CustomersPage() {
   const queryClient = useQueryClient();
   const { customersQuery, isLoading } = useCustomersData();
   const [searchTerm, setSearchTerm] = useState("");
+  const [customersPage, setCustomersPage] = useState(1);
+  const [loyaltyPage, setLoyaltyPage] = useState(1);
   const [modalMode, setModalMode] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [historyCustomer, setHistoryCustomer] = useState(null);
@@ -276,6 +280,22 @@ export function CustomersPage() {
 
   const mutationError =
     createMutation.error ?? updateMutation.error ?? deleteMutation.error;
+  const topLoyaltyCustomers = useMemo(
+    () =>
+      [...customers].sort(
+        (a, b) =>
+          Number(b.loyalty_points ?? 0) - Number(a.loyalty_points ?? 0),
+      ),
+    [customers],
+  );
+  const paginatedCustomers = useMemo(
+    () => paginateItems(visibleCustomers, customersPage, 8),
+    [customersPage, visibleCustomers],
+  );
+  const paginatedLoyaltyCustomers = useMemo(
+    () => paginateItems(topLoyaltyCustomers, loyaltyPage, 4),
+    [loyaltyPage, topLoyaltyCustomers],
+  );
 
   const openCreateModal = () => {
     setModalMode("create");
@@ -378,7 +398,10 @@ export function CustomersPage() {
                       placeholder="Search customers"
                       type="text"
                       value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
+                      onChange={(event) => {
+                        setSearchTerm(event.target.value);
+                        setCustomersPage(1);
+                      }}
                     />
                   </label>
 
@@ -425,7 +448,7 @@ export function CustomersPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {visibleCustomers.map((customer) => (
+                      {paginatedCustomers.items.map((customer) => (
                         <tr key={customer.id} className="border-t border-slate-100">
                           <td className="px-6 py-4">
                             <div>
@@ -480,6 +503,15 @@ export function CustomersPage() {
                   </p>
                 </div>
               )}
+
+              <PaginationControls
+                currentPage={paginatedCustomers.currentPage}
+                itemLabel="customers"
+                pageSize={8}
+                totalItems={paginatedCustomers.totalItems}
+                totalPages={paginatedCustomers.totalPages}
+                onPageChange={setCustomersPage}
+              />
             </div>
           </div>
 
@@ -531,20 +563,14 @@ export function CustomersPage() {
 
               {customers.length ? (
                 <div className="mt-6 space-y-3">
-                  {[...customers]
-                    .sort(
-                      (a, b) =>
-                        Number(b.loyalty_points ?? 0) - Number(a.loyalty_points ?? 0),
-                    )
-                    .slice(0, 5)
-                    .map((customer, index) => (
+                  {paginatedLoyaltyCustomers.items.map((customer, index) => (
                       <div
                         key={customer.id}
                         className="flex flex-col gap-3 rounded-2xl bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="flex min-w-0 items-center gap-4">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
-                            {index + 1}
+                            {(paginatedLoyaltyCustomers.currentPage - 1) * 4 + index + 1}
                           </div>
                           <div className="min-w-0">
                             <p className="truncate font-bold text-ink">{customer.name}</p>
@@ -572,6 +598,15 @@ export function CustomersPage() {
                   </p>
                 </div>
               )}
+
+              <PaginationControls
+                currentPage={paginatedLoyaltyCustomers.currentPage}
+                itemLabel="customers"
+                pageSize={4}
+                totalItems={paginatedLoyaltyCustomers.totalItems}
+                totalPages={paginatedLoyaltyCustomers.totalPages}
+                onPageChange={setLoyaltyPage}
+              />
             </div>
 
             {mutationError ? (
