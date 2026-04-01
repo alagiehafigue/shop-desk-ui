@@ -30,6 +30,21 @@ function formatCurrency(value) {
   }).format(amount);
 }
 
+function formatCurrencyParts(value) {
+  const formattedValue = formatCurrency(value);
+
+  if (!formattedValue.startsWith("GH")) {
+    return { prefix: "", amount: formattedValue };
+  }
+
+  const amount = formattedValue.replace(/^GH₵?/, "").trim();
+
+  return {
+    prefix: "GH₵",
+    amount,
+  };
+}
+
 function formatCompactNumber(value) {
   const amount = Number(value ?? 0);
 
@@ -69,19 +84,26 @@ function StatCard({ title, value, subtitle, icon: Icon, tone = "blue" }) {
     amber: "bg-amber-50 text-amber-600",
     slate: "bg-slate-100 text-slate-600",
   };
+  const isCustomValue = typeof value !== "string" && typeof value !== "number";
 
   return (
     <article className='rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm'>
       <div className='flex items-start justify-between gap-4'>
-        <div>
+        <div className='min-w-0 flex-1 pr-5'>
           <p className='text-sm font-semibold text-slate-500'>{title}</p>
-          <p className='mt-3 text-3xl font-extrabold tracking-tight text-ink'>
-            {value}
-          </p>
-          <p className='mt-2 text-sm text-slate-500'>{subtitle}</p>
+          <div className='mt-3 min-w-0'>
+            {isCustomValue ? (
+              value
+            ) : (
+              <p className='text-[2.35rem] font-extrabold leading-none tracking-tight text-ink sm:text-[2.6rem]'>
+                {value}
+              </p>
+            )}
+          </div>
+          <p className='mt-3 text-sm leading-6 text-slate-500'>{subtitle}</p>
         </div>
         <div
-          className={`flex h-12 w-12 items-center justify-center rounded-2xl ${toneClasses[tone]}`}
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${toneClasses[tone]}`}
         >
           <Icon className='text-2xl' />
         </div>
@@ -90,12 +112,36 @@ function StatCard({ title, value, subtitle, icon: Icon, tone = "blue" }) {
   );
 }
 
+function CurrencyValue({ value, align = "left", size = "large" }) {
+  const { prefix, amount } = formatCurrencyParts(value);
+  const sizeClasses =
+    size === "medium"
+      ? "text-[1.65rem] sm:text-[1.8rem]"
+      : "text-[1.85rem] xl:text-[2rem]";
+  const alignmentClass = align === "right" ? "justify-end text-right" : "text-left";
+
+  return (
+    <div
+      className={`flex flex-wrap items-baseline gap-x-1.5 gap-y-1 leading-tight ${alignmentClass}`}
+    >
+      {prefix ? (
+        <span className='shrink-0 text-[0.95rem] font-bold uppercase tracking-[0.08em] text-slate-500'>
+          {prefix}
+        </span>
+      ) : null}
+      <span className={`font-extrabold tracking-tight text-ink ${sizeClasses}`}>
+        {amount}
+      </span>
+    </div>
+  );
+}
+
 function DashboardSkeleton() {
   return (
     <section className='p-4 sm:p-6 lg:p-8'>
       <div className='grid gap-6 xl:grid-cols-[1.6fr_0.9fr]'>
         <div className='space-y-6'>
-          <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+          <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-4'>
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
@@ -167,7 +213,11 @@ function CashierDashboard({ user }) {
   const customers = customersQuery.data ?? [];
   const lowStockItems = lowStockQuery.data ?? [];
   const pendingSales = pendingSalesQuery.data ?? [];
-  const paginatedPendingSales = paginateItems(pendingSales, pendingSalesPage, 4);
+  const paginatedPendingSales = paginateItems(
+    pendingSales,
+    pendingSalesPage,
+    4,
+  );
   const paginatedLowStockItems = paginateItems(lowStockItems, lowStockPage, 4);
 
   return (
@@ -201,7 +251,7 @@ function CashierDashboard({ user }) {
             </div>
           </div>
 
-          <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+          <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-4'>
             <StatCard
               title='Products Ready'
               value={formatCompactNumber(products.length)}
@@ -462,6 +512,12 @@ export function DashboardPage() {
     topProductsPage,
     4,
   );
+  const weeklyChartHeightClass =
+    weeklyChartData.length <= 1
+      ? "h-44"
+      : weeklyChartData.length <= 3
+        ? "h-56"
+        : "h-72";
   const totalWeeklySales = weeklySales.reduce(
     (sum, row) => sum + Number(row.sales ?? 0),
     0,
@@ -475,10 +531,10 @@ export function DashboardPage() {
     <section className='p-4 sm:p-6 lg:p-8'>
       <div className='grid gap-6 xl:grid-cols-[1.6fr_0.9fr]'>
         <div className='space-y-6'>
-          <div className='grid  gap-4 md:grid-cols-2 xl:grid-cols-4'>
+          <div className='grid gap-4 md:grid-cols-2 2xl:grid-cols-4'>
             <StatCard
               title="Today's Sales"
-              value={formatCurrency(todaySales?.total_sales)}
+              value={<CurrencyValue value={todaySales?.total_sales} />}
               subtitle='Revenue recorded for the current day.'
               icon={HiArrowTrendingUp}
             />
@@ -516,13 +572,17 @@ export function DashboardPage() {
                 </h2>
               </div>
 
-              <div className='w-full rounded-2xl bg-slate-50 px-4 py-3 text-left sm:w-auto sm:text-right'>
+              <div className='w-full rounded-2xl bg-slate-50 px-4 py-3 text-left sm:min-w-[190px] sm:w-auto sm:pr-5 sm:text-right'>
                 <p className='text-xs font-semibold uppercase tracking-[0.24em] text-slate-400'>
                   7 Day Total
                 </p>
-                <p className='mt-1 text-xl font-extrabold text-ink'>
-                  {formatCurrency(totalWeeklySales)}
-                </p>
+                <div className='mt-2'>
+                  <CurrencyValue
+                    align='right'
+                    size='medium'
+                    value={totalWeeklySales}
+                  />
+                </div>
                 <p className='text-sm text-slate-500'>
                   {formatCompactNumber(totalWeeklyTransactions)} transactions
                 </p>
@@ -531,7 +591,9 @@ export function DashboardPage() {
 
             {weeklyChartData.length ? (
               <div className='mt-8'>
-                <div className='flex h-72 items-end gap-3 overflow-x-auto rounded-[24px] bg-slate-50 px-4 pb-4 pt-6 sm:gap-4'>
+                <div
+                  className={`flex items-end gap-3 overflow-x-auto rounded-[24px] bg-slate-50 px-4 pb-4 pt-6 sm:gap-4 ${weeklyChartHeightClass}`}
+                >
                   {weeklyChartData.map((item) => (
                     <div
                       key={item.label}
