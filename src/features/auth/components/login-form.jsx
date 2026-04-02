@@ -48,21 +48,23 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-[28px] border border-white/70 bg-white/95 p-6 shadow-panel backdrop-blur sm:p-8">
-      <div className="mb-8 flex flex-col items-center text-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 shadow-sm">
-          <PiShoppingCartSimpleFill className="text-3xl" />
+    <div className="w-full max-w-[30rem] rounded-[28px] border border-white/70 bg-white/95 p-5 shadow-panel backdrop-blur sm:p-6 lg:p-7">
+      <div className="mb-6 flex flex-col items-center text-center lg:mb-5">
+        <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 shadow-sm lg:h-12 lg:w-12">
+          <PiShoppingCartSimpleFill className="text-3xl lg:text-2xl" />
         </div>
         <p className="text-sm font-semibold uppercase tracking-[0.35em] text-brand-600">
           ShopDesk
         </p>
-        <h1 className="mt-3 text-2xl font-extrabold text-ink sm:text-3xl">POS System Login</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+        <h1 className="mt-2 text-2xl font-extrabold text-ink sm:text-3xl lg:text-[2rem]">
+          POS System Login
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-slate-500 lg:max-w-md lg:text-[0.95rem] lg:leading-6">
           Sign in to manage sales, inventory, customers, and daily operations.
         </p>
       </div>
 
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-4 lg:space-y-3.5" onSubmit={handleSubmit}>
         <label className="block">
           <span className="mb-2 block text-sm font-semibold text-slate-600">
             Email
@@ -72,7 +74,7 @@ export function LoginForm() {
             <input
               required
               autoComplete="email"
-              className="h-14 w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base"
+              className="h-[52px] w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base lg:h-12"
               name="email"
               placeholder="name@shopdesk.com"
               type="email"
@@ -91,7 +93,7 @@ export function LoginForm() {
             <input
               required
               autoComplete="current-password"
-              className="h-14 w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base"
+              className="h-[52px] w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base lg:h-12"
               name="password"
               placeholder="Enter your password"
               type={showPassword ? "text" : "password"}
@@ -131,7 +133,7 @@ export function LoginForm() {
         ) : null}
 
         <button
-          className="flex h-14 w-full items-center justify-center rounded-2xl bg-brand-600 px-4 text-base font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="flex h-[52px] w-full items-center justify-center rounded-2xl bg-brand-600 px-4 text-base font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 lg:h-12"
           disabled={loginMutation.isPending}
           type="submit"
         >
