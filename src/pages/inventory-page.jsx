@@ -315,7 +315,7 @@ export function InventoryPage() {
   return (
     <>
       <section className="p-4 sm:p-6 lg:p-8">
-        <div className="grid gap-6 xl:grid-cols-[1.45fr_0.85fr]">
+        <div className="grid gap-6 2xl:grid-cols-[1.45fr_0.85fr]">
           <div className="space-y-6">
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
