@@ -377,7 +377,7 @@ export function CustomersPage() {
   return (
     <>
       <section className="p-4 sm:p-6 lg:p-8">
-        <div className="grid gap-6 xl:grid-cols-[1.45fr_0.85fr]">
+        <div className="grid gap-6 2xl:grid-cols-[1.45fr_0.85fr]">
           <div className="space-y-6">
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -390,8 +390,8 @@ export function CustomersPage() {
                   </h1>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <label className="flex w-full items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 focus-within:border-brand-500 focus-within:bg-white sm:w-[320px]">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap 2xl:flex-nowrap">
+                  <label className="flex w-full items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 focus-within:border-brand-500 focus-within:bg-white sm:w-[320px] 2xl:w-[320px]">
                     <HiMagnifyingGlass className="mr-3 shrink-0 text-xl text-slate-400" />
                     <input
                       className="h-12 w-full border-none bg-transparent text-sm outline-none placeholder:text-slate-400 sm:text-base"
