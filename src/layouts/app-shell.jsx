@@ -64,8 +64,8 @@ export function AppShell() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="mx-auto flex min-h-screen max-w-[1440px]">
+    <div className="min-h-screen overflow-x-hidden bg-slate-100">
+      <div className="mx-auto flex min-h-screen max-w-[1440px] overflow-x-hidden">
         <aside className="hidden w-72 flex-col bg-brand-900 px-6 py-8 text-white lg:flex">
           <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-brand-700">
@@ -89,7 +89,7 @@ export function AppShell() {
           </button>
         </aside>
 
-        <main className="flex-1">
+        <main className="min-w-0 flex-1 overflow-x-hidden">
           <header className="border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3 sm:gap-4">
