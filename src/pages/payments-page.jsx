@@ -375,7 +375,7 @@ export function PaymentsPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid gap-6 2xl:grid-cols-[0.9fr_1.1fr]">
             <div className="space-y-6">
               <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex items-start gap-3 sm:items-center">
