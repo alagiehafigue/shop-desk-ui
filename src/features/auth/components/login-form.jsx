@@ -7,9 +7,10 @@ import { PiShoppingCartSimpleFill } from "react-icons/pi";
 import { useLogin } from "../use-login";
 import { useAuth } from "../auth-context";
 import { getApiErrorMessage } from "../../../lib/error-utils";
+import { getRememberedEmail, setRememberedEmail } from "../../../lib/storage";
 
 const initialForm = {
-  email: "",
+  email: getRememberedEmail(),
   password: "",
 };
 
@@ -41,11 +42,7 @@ export function LoginForm() {
     const data = await loginMutation.mutateAsync(formValues);
     signIn(data);
 
-    if (!rememberMe) {
-      sessionStorage.setItem("shopdesk.sessionOnly", "true");
-    } else {
-      sessionStorage.removeItem("shopdesk.sessionOnly");
-    }
+    setRememberedEmail(rememberMe ? formValues.email : "");
 
     navigate(redirectPath, { replace: true });
   };
