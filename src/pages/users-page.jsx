@@ -46,7 +46,7 @@ export function UsersPage() {
 
   return (
     <section className="p-4 sm:p-6 lg:p-8">
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-6 2xl:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-start gap-3 sm:items-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
