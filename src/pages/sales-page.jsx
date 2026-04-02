@@ -12,9 +12,11 @@ import { usePosData } from "../features/sales/use-pos-data";
 import {
   createSale,
   fetchReceipt,
+  initializePayment,
   processPayment,
 } from "../features/sales/sales-api";
 import { getApiErrorMessage } from "../lib/error-utils";
+import { startPaystackCheckout } from "../lib/paystack";
 
 const paymentOptions = [
   { label: "Cash", value: "cash", icon: HiOutlineBanknotes },
@@ -40,6 +42,21 @@ function formatDateTime(value) {
   }).format(new Date(value));
 }
 
+function formatPaystackChannel(channel) {
+  if (!channel) {
+    return null;
+  }
+
+  if (channel === "mobile_money") {
+    return "Mobile Money";
+  }
+
+  return channel
+    .split("_")
+    .map((value) => value.charAt(0).toUpperCase() + value.slice(1))
+    .join(" ");
+}
+
 function getPaymentDetails(paymentResult) {
   if (!paymentResult) {
     return [];
@@ -48,10 +65,17 @@ function getPaymentDetails(paymentResult) {
   const details = [];
 
   if (paymentResult.method === "momo") {
-    if (paymentResult.momo_reference_id) {
+    if (paymentResult.paystack_reference_id) {
       details.push({
-        label: "MoMo Reference",
-        value: paymentResult.momo_reference_id,
+        label: "Paystack Reference",
+        value: paymentResult.paystack_reference_id,
+      });
+    }
+
+    if (paymentResult.paystack_channel) {
+      details.push({
+        label: "Channel",
+        value: formatPaystackChannel(paymentResult.paystack_channel),
       });
     }
 
@@ -64,17 +88,24 @@ function getPaymentDetails(paymentResult) {
   }
 
   if (paymentResult.method === "card") {
-    if (paymentResult.card_reference_id) {
+    if (paymentResult.paystack_reference_id) {
       details.push({
-        label: "Terminal Reference",
-        value: paymentResult.card_reference_id,
+        label: "Paystack Reference",
+        value: paymentResult.paystack_reference_id,
       });
     }
 
-    if (paymentResult.card_approval_code) {
+    if (paymentResult.card_brand) {
       details.push({
-        label: "Approval Code",
-        value: paymentResult.card_approval_code,
+        label: "Card Brand",
+        value: paymentResult.card_brand,
+      });
+    }
+
+    if (paymentResult.card_bank) {
+      details.push({
+        label: "Issuing Bank",
+        value: paymentResult.card_bank,
       });
     }
 
@@ -84,6 +115,13 @@ function getPaymentDetails(paymentResult) {
         value: `**** ${paymentResult.card_last4}`,
       });
     }
+  }
+
+  if (paymentResult.paystack_paid_at) {
+    details.push({
+      label: "Paid At",
+      value: formatDateTime(paymentResult.paystack_paid_at),
+    });
   }
 
   return details;
@@ -380,12 +418,11 @@ export function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [payerPhone, setPayerPhone] = useState("");
-  const [cardHolderName, setCardHolderName] = useState("");
-  const [cardLast4, setCardLast4] = useState("");
-  const [cardAuthCode, setCardAuthCode] = useState("");
   const [activeSaleId, setActiveSaleId] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [paymentResult, setPaymentResult] = useState(null);
+  const [checkoutFeedback, setCheckoutFeedback] = useState(null);
+  const [isPaystackPending, setIsPaystackPending] = useState(false);
 
   const products = productsQuery.data ?? [];
   const customers = customersQuery.data ?? [];
@@ -431,6 +468,10 @@ export function SalesPage() {
 
   const saleMutation = useMutation({
     mutationFn: createSale,
+  });
+
+  const initializePaymentMutation = useMutation({
+    mutationFn: initializePayment,
   });
 
   const paymentMutation = useMutation({
@@ -518,16 +559,16 @@ export function SalesPage() {
     setPaymentMethod("cash");
     setAmountPaid("");
     setPayerPhone("");
-    setCardHolderName("");
-    setCardLast4("");
-    setCardAuthCode("");
     setActiveSaleId(null);
+    setCheckoutFeedback(null);
   };
 
   const handleCheckout = async () => {
     let saleId = activeSaleId;
 
     try {
+      setCheckoutFeedback(null);
+
       if (!saleId) {
         const sale = await saleMutation.mutateAsync({
           customer_id: selectedCustomerId || null,
@@ -543,23 +584,52 @@ export function SalesPage() {
         setActiveSaleId(sale.id);
       }
 
-      const payment = await paymentMutation.mutateAsync({
-        sale_id: saleId,
-        method: paymentMethod,
-        amount_paid: Number(amountPaid),
-        card_auth_code: paymentMethod === "card" ? cardAuthCode.trim() : undefined,
-        card_holder_name: paymentMethod === "card" ? cardHolderName.trim() : undefined,
-        card_last4:
-          paymentMethod === "card" ? cardLast4.replace(/\D/g, "") : undefined,
-        payer_phone: paymentMethod === "momo" ? payerPhone.trim() : undefined,
-      });
+      const payableAmount = paymentMethod === "cash" ? Number(amountPaid) : total;
+      let payment = null;
+
+      if (paymentMethod === "cash") {
+        payment = await paymentMutation.mutateAsync({
+          sale_id: saleId,
+          method: paymentMethod,
+          amount_paid: payableAmount,
+        });
+      } else {
+        setIsPaystackPending(true);
+
+        const paystackSession = await initializePaymentMutation.mutateAsync({
+          sale_id: saleId,
+          method: paymentMethod,
+          payer_phone: payerPhone.trim() || undefined,
+        });
+
+        const paystackTransaction = await startPaystackCheckout({
+          accessCode: paystackSession.access_code,
+        });
+
+        payment = await paymentMutation.mutateAsync({
+          sale_id: saleId,
+          method: paymentMethod,
+          amount_paid: payableAmount,
+          paystack_reference:
+            paystackTransaction.reference || paystackSession.reference,
+        });
+      }
 
       const nextReceipt = await fetchReceipt(saleId);
 
       setReceipt(nextReceipt);
       setPaymentResult(payment);
       clearSaleState();
+    } catch (error) {
+      if (!error?.response) {
+        const message = getApiErrorMessage(error);
+        setCheckoutFeedback({
+          message,
+          tone: message.toLowerCase().includes("cancelled") ? "warning" : "error",
+        });
+      }
     } finally {
+      setIsPaystackPending(false);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["products", "list"] }),
         queryClient.invalidateQueries({ queryKey: ["payments", "list"] }),
@@ -573,7 +643,16 @@ export function SalesPage() {
     }
   };
 
-  const mutationError = saleMutation.error ?? paymentMutation.error;
+  const mutationError =
+    saleMutation.error ??
+    initializePaymentMutation.error ??
+    paymentMutation.error;
+  const isElectronicPayment = paymentMethod !== "cash";
+  const isProcessingCheckout =
+    saleMutation.isPending ||
+    initializePaymentMutation.isPending ||
+    paymentMutation.isPending ||
+    isPaystackPending;
 
   return (
     <>
@@ -836,14 +915,19 @@ export function SalesPage() {
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-semibold text-slate-600">
-                    Amount paid
+                    {isElectronicPayment ? "Amount to charge" : "Amount paid"}
                   </span>
                   <input
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+                    className={`h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none ${
+                      isElectronicPayment
+                        ? "bg-slate-100 text-slate-500"
+                        : "bg-slate-50 focus:border-brand-500 focus:bg-white"
+                    }`}
                     min="0"
+                    readOnly={isElectronicPayment}
                     step="0.01"
                     type="number"
-                    value={amountPaid}
+                    value={isElectronicPayment ? total.toFixed(2) : amountPaid}
                     onChange={(event) => setAmountPaid(event.target.value)}
                   />
                 </label>
@@ -855,53 +939,21 @@ export function SalesPage() {
                     </span>
                     <input
                       className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                      placeholder="233XXXXXXXXX"
+                      placeholder="233XXXXXXXXX (optional)"
                       type="text"
                       value={payerPhone}
                       onChange={(event) => setPayerPhone(event.target.value)}
                     />
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      Paystack will complete the real Mobile Money prompt in a secure popup.
+                    </p>
                   </label>
                 ) : null}
 
                 {paymentMethod === "card" ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block sm:col-span-2">
-                      <span className="mb-2 block text-sm font-semibold text-slate-600">
-                        Cardholder name
-                      </span>
-                      <input
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                        placeholder="Name on card"
-                        type="text"
-                        value={cardHolderName}
-                        onChange={(event) => setCardHolderName(event.target.value)}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-semibold text-slate-600">
-                        Last 4 digits
-                      </span>
-                      <input
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                        maxLength={4}
-                        placeholder="1234"
-                        type="text"
-                        value={cardLast4}
-                        onChange={(event) => setCardLast4(event.target.value)}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-semibold text-slate-600">
-                        Authorization code
-                      </span>
-                      <input
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                        placeholder="Terminal reference"
-                        type="text"
-                        value={cardAuthCode}
-                        onChange={(event) => setCardAuthCode(event.target.value)}
-                      />
-                    </label>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                    Card details are now collected securely inside the Paystack popup after
+                    you continue.
                   </div>
                 ) : null}
 
@@ -930,26 +982,36 @@ export function SalesPage() {
                   </div>
                 ) : null}
 
+                {checkoutFeedback ? (
+                  <div
+                    className={`rounded-2xl border px-4 py-3 text-sm ${
+                      checkoutFeedback.tone === "warning"
+                        ? "border-amber-200 bg-amber-50 text-amber-800"
+                        : "border-red-100 bg-red-50 text-red-600"
+                    }`}
+                  >
+                    {checkoutFeedback.message}
+                  </div>
+                ) : null}
+
                 <button
                   className="flex h-14 w-full items-center justify-center rounded-2xl bg-brand-600 px-4 text-base font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                   disabled={
                     !cartRows.length ||
-                    !amountPaid ||
-                    (paymentMethod === "momo" && !payerPhone.trim()) ||
-                    (paymentMethod === "card" &&
-                      (!cardHolderName.trim() ||
-                        !cardLast4.trim() ||
-                        !cardAuthCode.trim())) ||
-                    Number(amountPaid) < total ||
-                    saleMutation.isPending ||
-                    paymentMutation.isPending
+                    (paymentMethod === "cash" &&
+                      (!amountPaid || Number(amountPaid) < total)) ||
+                    isProcessingCheckout
                   }
                   type="button"
                   onClick={handleCheckout}
                 >
-                  {saleMutation.isPending || paymentMutation.isPending
-                    ? "Processing sale..."
-                    : "Complete checkout"}
+                  {isProcessingCheckout
+                    ? paymentMethod === "cash"
+                      ? "Processing sale..."
+                      : "Opening Paystack..."
+                    : paymentMethod === "cash"
+                      ? "Complete checkout"
+                      : "Continue to Paystack"}
                 </button>
               </div>
             </div>

@@ -15,6 +15,11 @@ export async function fetchPendingSales() {
   return data;
 }
 
+export async function initializePayment(payload) {
+  const { data } = await apiClient.post("/payments/initialize", payload);
+  return data;
+}
+
 export async function processPayment(payload) {
   const { data } = await apiClient.post("/payments/pay", payload);
   return data;

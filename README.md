@@ -18,7 +18,7 @@ Built with:
 - products, inventory, and customers management
 - payments center
 - reports for admin and manager roles
-- MTN MoMo-ready frontend payment flow
+- Paystack-powered card and mobile money checkout flow
 
 ## Requirements
 
@@ -31,6 +31,7 @@ Create a `.env` file in `shop-desk-ui` and set:
 
 ```env
 VITE_API_URL=http://localhost:5000
+VITE_PAYSTACK_PUBLIC_KEY=pk_test_or_pk_live_key
 ```
 
 ## Installation
@@ -108,4 +109,4 @@ npm run preview
 
 ## Notes
 
-- Use the backend `.env` to configure JWT, database, and MTN MoMo credentials.
+- Use the backend `.env` to configure JWT, database, and Paystack credentials.

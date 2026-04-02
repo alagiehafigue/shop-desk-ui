@@ -9,9 +9,13 @@ import {
 
 import { PaginationControls } from "../components/pagination-controls";
 import { getApiErrorMessage } from "../lib/error-utils";
-import { processPayment } from "../features/payments/payments-api";
+import {
+  initializePayment,
+  processPayment,
+} from "../features/payments/payments-api";
 import { usePaymentsData } from "../features/payments/use-payments-data";
 import { paginateItems } from "../lib/pagination";
+import { startPaystackCheckout } from "../lib/paystack";
 
 const paymentMethods = [
   {
@@ -65,10 +69,10 @@ function getMethodLabel(method) {
 }
 
 function PaymentModal({
+  feedback,
   paymentMethod,
   pendingSale,
   values,
-  errorMessage,
   isPending,
   onChange,
   onClose,
@@ -130,13 +134,18 @@ function PaymentModal({
 
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-600">
-              Amount paid
+              {paymentMethod === "cash" ? "Amount paid" : "Amount to charge"}
             </span>
             <input
               required
-              className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
+              className={`h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none ${
+                paymentMethod === "cash"
+                  ? "bg-slate-50 focus:border-brand-500 focus:bg-white"
+                  : "bg-slate-100 text-slate-500"
+              }`}
               min="0"
               name="amount_paid"
+              readOnly={paymentMethod !== "cash"}
               step="0.01"
               type="number"
               value={values.amount_paid}
@@ -150,64 +159,34 @@ function PaymentModal({
                 Mobile Money number
               </span>
               <input
-                required
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
                 name="payer_phone"
-                placeholder="233XXXXXXXXX"
+                placeholder="233XXXXXXXXX (optional)"
                 value={values.payer_phone}
                 onChange={onChange}
               />
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Paystack will handle the actual collection prompt in a secure popup.
+              </p>
             </label>
           ) : null}
 
           {paymentMethod === "card" ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="block md:col-span-2">
-                <span className="mb-2 block text-sm font-semibold text-slate-600">
-                  Cardholder name
-                </span>
-                <input
-                  required
-                  className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                  name="card_holder_name"
-                  placeholder="Name on card"
-                  value={values.card_holder_name}
-                  onChange={onChange}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-slate-600">
-                  Last 4 digits
-                </span>
-                <input
-                  required
-                  className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                  maxLength={4}
-                  name="card_last4"
-                  placeholder="1234"
-                  value={values.card_last4}
-                  onChange={onChange}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-slate-600">
-                  Authorization code
-                </span>
-                <input
-                  required
-                  className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 outline-none focus:border-brand-500 focus:bg-white"
-                  name="card_auth_code"
-                  placeholder="Terminal reference"
-                  value={values.card_auth_code}
-                  onChange={onChange}
-                />
-              </label>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+              Card details will be collected securely in the Paystack popup after you
+              continue.
             </div>
           ) : null}
 
-          {errorMessage ? (
-            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
-              {errorMessage}
+          {feedback ? (
+            <div
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                feedback.tone === "warning"
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-red-100 bg-red-50 text-red-600"
+              }`}
+            >
+              {feedback.message}
             </div>
           ) : null}
 
@@ -224,7 +203,13 @@ function PaymentModal({
               disabled={isPending}
               type="submit"
             >
-              {isPending ? "Processing..." : "Confirm payment"}
+              {isPending
+                ? paymentMethod === "cash"
+                  ? "Processing..."
+                  : "Opening Paystack..."
+                : paymentMethod === "cash"
+                  ? "Confirm payment"
+                  : "Continue to Paystack"}
             </button>
           </div>
         </form>
@@ -241,12 +226,11 @@ export function PaymentsPage() {
   const [paymentMethod, setPaymentMethod] = useState("momo");
   const [pendingSalesPage, setPendingSalesPage] = useState(1);
   const [paymentsPage, setPaymentsPage] = useState(1);
+  const [checkoutFeedback, setCheckoutFeedback] = useState(null);
+  const [isPaystackPending, setIsPaystackPending] = useState(false);
   const [formValues, setFormValues] = useState({
     amount_paid: "",
     payer_phone: "",
-    card_auth_code: "",
-    card_holder_name: "",
-    card_last4: "",
   });
 
   const payments = paymentsQuery.data ?? [];
@@ -274,6 +258,9 @@ export function PaymentsPage() {
       ]);
     },
   });
+  const initializePaymentMutation = useMutation({
+    mutationFn: initializePayment,
+  });
 
   const totalPaymentsValue = useMemo(
     () =>
@@ -284,24 +271,21 @@ export function PaymentsPage() {
   const openPaymentModal = (sale) => {
     setSelectedSale(sale);
     setPaymentMethod("momo");
+    setCheckoutFeedback(null);
     setFormValues({
       amount_paid: sale.total_amount,
       payer_phone: "",
-      card_auth_code: "",
-      card_holder_name: "",
-      card_last4: "",
     });
+    initializePaymentMutation.reset();
     paymentMutation.reset();
   };
 
   const closePaymentModal = () => {
     setSelectedSale(null);
+    setCheckoutFeedback(null);
     setFormValues({
       amount_paid: "",
       payer_phone: "",
-      card_auth_code: "",
-      card_holder_name: "",
-      card_last4: "",
     });
   };
 
@@ -313,24 +297,80 @@ export function PaymentsPage() {
     }));
   };
 
+  const handleMethodChange = (value) => {
+    setPaymentMethod(value);
+    setCheckoutFeedback(null);
+    setFormValues((current) => ({
+      ...current,
+      amount_paid:
+        value === "cash"
+          ? current.amount_paid || selectedSale?.total_amount || ""
+          : selectedSale?.total_amount || current.amount_paid,
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    await paymentMutation.mutateAsync({
-      sale_id: selectedSale.id,
-      method: paymentMethod,
-      amount_paid: Number(formValues.amount_paid),
-      card_auth_code:
-        paymentMethod === "card" ? formValues.card_auth_code.trim() : undefined,
-      card_holder_name:
-        paymentMethod === "card" ? formValues.card_holder_name.trim() : undefined,
-      card_last4:
-        paymentMethod === "card" ? formValues.card_last4.replace(/\D/g, "") : undefined,
-      payer_phone: paymentMethod === "momo" ? formValues.payer_phone.trim() : undefined,
-    });
+    try {
+      setCheckoutFeedback(null);
 
-    closePaymentModal();
+      if (paymentMethod === "cash") {
+        await paymentMutation.mutateAsync({
+          sale_id: selectedSale.id,
+          method: paymentMethod,
+          amount_paid: Number(formValues.amount_paid),
+        });
+      } else {
+        setIsPaystackPending(true);
+
+        const paystackSession = await initializePaymentMutation.mutateAsync({
+          sale_id: selectedSale.id,
+          method: paymentMethod,
+          payer_phone: formValues.payer_phone.trim() || undefined,
+        });
+
+        const paystackTransaction = await startPaystackCheckout({
+          accessCode: paystackSession.access_code,
+        });
+
+        await paymentMutation.mutateAsync({
+          sale_id: selectedSale.id,
+          method: paymentMethod,
+          amount_paid: Number(selectedSale.total_amount),
+          paystack_reference:
+            paystackTransaction.reference || paystackSession.reference,
+        });
+      }
+
+      closePaymentModal();
+    } catch (error) {
+      if (!error?.response) {
+        const message = getApiErrorMessage(error);
+        setCheckoutFeedback({
+          message,
+          tone: message.toLowerCase().includes("cancelled") ? "warning" : "error",
+        });
+      }
+    } finally {
+      setIsPaystackPending(false);
+    }
   };
+
+  const modalFeedback =
+    checkoutFeedback ??
+    (initializePaymentMutation.error
+      ? {
+          message: getApiErrorMessage(initializePaymentMutation.error),
+          tone: "error",
+        }
+      : null) ??
+    (paymentMutation.error
+      ? {
+          message: getApiErrorMessage(paymentMutation.error),
+          tone: "error",
+        }
+      : null);
 
   return (
     <>
@@ -592,16 +632,18 @@ export function PaymentsPage() {
 
       {selectedSale ? (
         <PaymentModal
-          errorMessage={
-            paymentMutation.error ? getApiErrorMessage(paymentMutation.error) : null
+          feedback={modalFeedback}
+          isPending={
+            initializePaymentMutation.isPending ||
+            paymentMutation.isPending ||
+            isPaystackPending
           }
-          isPending={paymentMutation.isPending}
           paymentMethod={paymentMethod}
           pendingSale={selectedSale}
           values={formValues}
           onChange={handleChange}
           onClose={closePaymentModal}
-          onMethodChange={setPaymentMethod}
+          onMethodChange={handleMethodChange}
           onSubmit={handleSubmit}
         />
       ) : null}
