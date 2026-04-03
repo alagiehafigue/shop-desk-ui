@@ -29,3 +29,8 @@ export async function fetchReceipt(saleId) {
   const { data } = await apiClient.get(`/sales/${saleId}/receipt`);
   return data;
 }
+
+export async function fetchSale(saleId) {
+  const { data } = await apiClient.get(`/sales/${saleId}`);
+  return data;
+}

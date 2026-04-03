@@ -13,6 +13,8 @@ import {
   initializePayment,
   processPayment,
 } from "../features/payments/payments-api";
+import { fetchReceipt } from "../features/sales/sales-api";
+import { ReceiptModal } from "../features/sales/receipt-modal";
 import { usePaymentsData } from "../features/payments/use-payments-data";
 import { paginateItems } from "../lib/pagination";
 import { startPaystackCheckout } from "../lib/paystack";
@@ -68,7 +70,7 @@ function getMethodLabel(method) {
   return "Cash";
 }
 
-function PaymentModal({
+export function PaymentModal({
   feedback,
   paymentMethod,
   pendingSale,
@@ -228,6 +230,8 @@ export function PaymentsPage() {
   const [paymentsPage, setPaymentsPage] = useState(1);
   const [checkoutFeedback, setCheckoutFeedback] = useState(null);
   const [isPaystackPending, setIsPaystackPending] = useState(false);
+  const [receipt, setReceipt] = useState(null);
+  const [paymentResult, setPaymentResult] = useState(null);
   const [formValues, setFormValues] = useState({
     amount_paid: "",
     payer_phone: "",
@@ -255,6 +259,8 @@ export function PaymentsPage() {
         queryClient.invalidateQueries({ queryKey: ["reports", "daily-sales"] }),
         queryClient.invalidateQueries({ queryKey: ["reports", "weekly-sales"] }),
         queryClient.invalidateQueries({ queryKey: ["reports", "cashier-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "product-performance"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "inventory"] }),
       ]);
     },
   });
@@ -309,15 +315,23 @@ export function PaymentsPage() {
     }));
   };
 
+  const closeReceiptModal = () => {
+    setReceipt(null);
+    setPaymentResult(null);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const saleId = selectedSale.id;
+    let payment = null;
 
     try {
       setCheckoutFeedback(null);
 
       if (paymentMethod === "cash") {
-        await paymentMutation.mutateAsync({
-          sale_id: selectedSale.id,
+        payment = await paymentMutation.mutateAsync({
+          sale_id: saleId,
           method: paymentMethod,
           amount_paid: Number(formValues.amount_paid),
         });
@@ -325,7 +339,7 @@ export function PaymentsPage() {
         setIsPaystackPending(true);
 
         const paystackSession = await initializePaymentMutation.mutateAsync({
-          sale_id: selectedSale.id,
+          sale_id: saleId,
           method: paymentMethod,
           payer_phone: formValues.payer_phone.trim() || undefined,
         });
@@ -334,8 +348,8 @@ export function PaymentsPage() {
           accessCode: paystackSession.access_code,
         });
 
-        await paymentMutation.mutateAsync({
-          sale_id: selectedSale.id,
+        payment = await paymentMutation.mutateAsync({
+          sale_id: saleId,
           method: paymentMethod,
           amount_paid: Number(selectedSale.total_amount),
           paystack_reference:
@@ -343,15 +357,16 @@ export function PaymentsPage() {
         });
       }
 
+      const nextReceipt = await fetchReceipt(saleId);
+      setReceipt(nextReceipt);
+      setPaymentResult(payment);
       closePaymentModal();
     } catch (error) {
-      if (!error?.response) {
-        const message = getApiErrorMessage(error);
-        setCheckoutFeedback({
-          message,
-          tone: message.toLowerCase().includes("cancelled") ? "warning" : "error",
-        });
-      }
+      const message = getApiErrorMessage(error);
+      setCheckoutFeedback({
+        message,
+        tone: message.toLowerCase().includes("cancelled") ? "warning" : "error",
+      });
     } finally {
       setIsPaystackPending(false);
     }
@@ -647,6 +662,12 @@ export function PaymentsPage() {
           onSubmit={handleSubmit}
         />
       ) : null}
+
+      <ReceiptModal
+        receipt={receipt}
+        paymentResult={paymentResult}
+        onClose={closeReceiptModal}
+      />
     </>
   );
 }

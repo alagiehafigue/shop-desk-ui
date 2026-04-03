@@ -9,15 +9,19 @@ import {
   HiOutlineUsers,
 } from "react-icons/hi2";
 import { useState } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+
+import { PaymentModal } from "./payments-page";
+import { ReceiptModal } from "../features/sales/receipt-modal";
+import { startPaystackCheckout } from "../lib/paystack";
 
 import { PaginationControls } from "../components/pagination-controls";
 import { useAuth } from "../features/auth/auth-context";
 import { useDashboardData } from "../features/reports/use-dashboard-data";
 import { fetchLowStockProducts } from "../features/inventory/inventory-api";
-import { fetchPendingSales } from "../features/payments/payments-api";
-import { fetchCustomers, fetchProducts } from "../features/sales/sales-api";
+import { fetchPendingSales, initializePayment, processPayment } from "../features/payments/payments-api";
+import { fetchCustomers, fetchProducts, fetchReceipt } from "../features/sales/sales-api";
 import { getApiErrorMessage } from "../lib/error-utils";
 import { paginateItems } from "../lib/pagination";
 
@@ -161,8 +165,22 @@ function DashboardSkeleton() {
 }
 
 function CashierDashboard({ user }) {
+  const queryClient = useQueryClient();
   const [pendingSalesPage, setPendingSalesPage] = useState(1);
   const [lowStockPage, setLowStockPage] = useState(1);
+  
+  // Payment Logic States
+  const [selectedSale, setSelectedSale] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("momo");
+  const [checkoutFeedback, setCheckoutFeedback] = useState(null);
+  const [isPaystackPending, setIsPaystackPending] = useState(false);
+  const [receipt, setReceipt] = useState(null);
+  const [paymentResult, setPaymentResult] = useState(null);
+  const [formValues, setFormValues] = useState({
+    amount_paid: "",
+    payer_phone: "",
+  });
+
   const [productsQuery, customersQuery, lowStockQuery, pendingSalesQuery] =
     useQueries({
       queries: [
@@ -184,6 +202,114 @@ function CashierDashboard({ user }) {
         },
       ],
     });
+
+  const paymentMutation = useMutation({
+    mutationFn: processPayment,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["payments", "list"] }),
+        queryClient.invalidateQueries({ queryKey: ["payments", "summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["payments", "pending-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "daily-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "weekly-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "cashier-sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "product-performance"] }),
+        queryClient.invalidateQueries({ queryKey: ["reports", "inventory"] }),
+      ]);
+    },
+  });
+
+  const initializePaymentMutation = useMutation({
+    mutationFn: initializePayment,
+  });
+
+  const openPaymentModal = (sale) => {
+    setSelectedSale(sale);
+    setPaymentMethod("momo");
+    setCheckoutFeedback(null);
+    setFormValues({
+      amount_paid: sale.total_amount,
+      payer_phone: sale.customer_phone || "",
+    });
+  };
+
+  const closePaymentModal = () => {
+    setSelectedSale(null);
+    setCheckoutFeedback(null);
+    setFormValues({ amount_paid: "", payer_phone: "" });
+  };
+
+  const handleMethodChange = (method) => {
+    setPaymentMethod(method);
+    setCheckoutFeedback(null);
+
+    setFormValues((prev) => ({
+      ...prev,
+      amount_paid: method === "cash" ? "" : selectedSale?.total_amount || "",
+    }));
+  };
+
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+    setFormValues((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const closeReceiptModal = () => {
+    setReceipt(null);
+    setPaymentResult(null);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const saleId = selectedSale.id;
+    let payment = null;
+
+    try {
+      setCheckoutFeedback(null);
+
+      if (paymentMethod === "cash") {
+        payment = await paymentMutation.mutateAsync({
+          sale_id: saleId,
+          method: "cash",
+          amount_paid: Number(formValues.amount_paid),
+        });
+      } else {
+        setIsPaystackPending(true);
+
+        const paystackSession = await initializePaymentMutation.mutateAsync({
+          sale_id: saleId,
+          method: paymentMethod,
+          payer_phone: formValues.payer_phone.trim() || undefined,
+        });
+
+        const paystackTransaction = await startPaystackCheckout({
+          accessCode: paystackSession.access_code,
+        });
+
+        payment = await paymentMutation.mutateAsync({
+          sale_id: saleId,
+          method: paymentMethod,
+          amount_paid: Number(selectedSale.total_amount),
+          paystack_reference:
+            paystackTransaction.reference || paystackSession.reference,
+        });
+      }
+
+      const nextReceipt = await fetchReceipt(saleId);
+      setReceipt(nextReceipt);
+      setPaymentResult(payment);
+      closePaymentModal();
+    } catch (error) {
+      const message = getApiErrorMessage(error);
+      setCheckoutFeedback({
+        message,
+        tone: message.toLowerCase().includes("cancelled") ? "warning" : "error",
+      });
+    } finally {
+      setIsPaystackPending(false);
+    }
+  };
 
   const isLoading =
     productsQuery.isLoading ||
@@ -312,9 +438,18 @@ function CashierDashboard({ user }) {
                       </p>
                       <p className='mt-1 text-sm text-slate-500'>{sale.id}</p>
                     </div>
-                    <p className='text-lg font-extrabold text-ink'>
-                      {formatCurrency(sale.total_amount)}
-                    </p>
+                    <div className='flex items-center gap-4'>
+                      <p className='text-lg font-extrabold text-ink'>
+                        {formatCurrency(sale.total_amount)}
+                      </p>
+                      <button
+                        className='rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700'
+                        type="button"
+                        onClick={() => openPaymentModal(sale)}
+                      >
+                        Pay now
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -429,6 +564,24 @@ function CashierDashboard({ user }) {
           </article>
         </div>
       </div>
+
+      <PaymentModal
+        feedback={checkoutFeedback}
+        isPending={paymentMutation.isPending || initializePaymentMutation.isPending || isPaystackPending}
+        paymentMethod={paymentMethod}
+        pendingSale={selectedSale}
+        values={formValues}
+        onChange={handleFormChange}
+        onClose={closePaymentModal}
+        onMethodChange={handleMethodChange}
+        onSubmit={handleSubmit}
+      />
+
+      <ReceiptModal
+        receipt={receipt}
+        paymentResult={paymentResult}
+        onClose={closeReceiptModal}
+      />
     </section>
   );
 }

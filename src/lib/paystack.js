@@ -58,21 +58,19 @@ export async function startPaystackCheckout({ accessCode }) {
 
   return new Promise((resolve, reject) => {
     const popup = new PaystackConstructor();
-
-    popup.onCancel = () => {
-      reject(
-        new Error("Paystack checkout was cancelled. The sale is still pending."),
-      );
-    };
-
-    popup.onError = (error) => {
-      reject(new Error(error?.message || "Unable to complete Paystack checkout."));
-    };
-
-    popup.onSuccess = (transaction) => {
-      resolve(transaction);
-    };
-
-    popup.resumeTransaction(accessCode);
+    
+    popup.resumeTransaction(accessCode, {
+      onSuccess: (transaction) => {
+        resolve(transaction);
+      },
+      onCancel: () => {
+        reject(
+          new Error("Paystack checkout was cancelled. The sale is still pending."),
+        );
+      },
+      onError: (error) => {
+        reject(new Error(error?.message || "Unable to complete Paystack checkout."));
+      }
+    });
   });
 }
